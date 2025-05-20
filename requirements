@@ -1,0 +1,5 @@
+pygame==2.61
+
+pytest==8.3.5
+
+pybag==2.2.15
