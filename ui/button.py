@@ -19,6 +19,16 @@ class Button:
         assert isinstance(text_color, tuple) and len(text_color) == 3 and all(isinstance(c, int) and 0 <= c <= 255 for c in text_color), "text_color musi być krotką 3 liczb całkowitych z zakresu 0-255"
         assert isinstance(text_size, int) and text_size > 0, "text_size musi być nieujemną liczbą całkowitą"
 
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
+
+        self.rel_x = x
+        self.rel_y = y
+        self.rel_width = width
+        self.rel_height = height
+
         self.rect = pygame.Rect(x, y, width, height)
         self.rect.center = (x, y)
 
@@ -37,6 +47,8 @@ class Button:
     def draw(self, screen: pygame.Surface):
         assert isinstance(screen, pygame.Surface), "screen musi być instancją pygame.Surface"
 
+        self.update_size(screen)
+
         # Wybór koloru przycisku w zależności od interakcji
         if self.is_pressed:
             current_color = self.color_click
@@ -50,6 +62,22 @@ class Button:
         text_surface = self.font.render(self.text, True, self.text_color)
         text_rect = text_surface.get_rect(center=self.rect.center)
         screen.blit(text_surface, text_rect)
+
+    """Aktualizacja wielkości guzika względem dynamicznie zmieniającej się rozdzielczości okna."""
+    def update_size(self, screen: pygame.Surface):
+        assert isinstance(screen, pygame.Surface), "screen musi być instancją pygame.Surface"
+
+        screen_width, screen_height = screen.get_size()
+
+        rect_width = int(screen_width * (self.width / config.SCREEN_WIDTH))
+        rect_height = int(screen_height * (self.height / config.SCREEN_HEIGHT))
+        rect_x = int(screen_width * (self.x / config.SCREEN_WIDTH))
+        rect_y = int(screen_height * (self.y / config.SCREEN_HEIGHT))
+
+        self.rect = pygame.Rect(0, 0, rect_width, rect_height)
+        self.rect.center = (rect_x, rect_y)
+        text_size = int(min(rect_width, rect_height) * 0.8)
+        self.font = pygame.font.SysFont(None, max(24, text_size))
 
     """Sprawdzanie, czy kursor znajduje się nad przyciskiem."""
     def is_hovered(self):
