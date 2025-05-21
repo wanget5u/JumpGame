@@ -1,0 +1,81 @@
+import pygame
+
+from config import config
+from game.player import Player
+
+class Engine:
+    def __init__(self, floor_y: int):
+        assert isinstance(floor_y, int) and floor_y > 0, "floor_y musi być dodatnią liczbą całkowitą"
+
+        self.floor_y = floor_y
+        self.gravity = 3000
+        self.jump_force = -1200
+
+    def _check_player_coherence(self, player: Player) -> bool:
+        assert isinstance(player, Player), "player musi być instancją klasy Player"
+        return player.outer_rect.bottom <= self.floor_y
+
+    """ Sprawdza kolizję gracza z przeszkodą """
+    def check_player_collision_with_object(self, player: Player, obstacle_rect: pygame.Rect) -> bool:
+        assert isinstance(player, Player), "player musi być instancją klasy Player"
+        assert isinstance(obstacle_rect, pygame.Rect), "obstacle_rect musi być instancją pygame.Rect"
+        return player.outer_rect.colliderect(obstacle_rect)
+
+    """ Aktualizuje pozycję gracza na podstawie prędkości, grawitacji i czasu (delta_time):
+    Dodaje grawitację, przesuwa gracza, obsługuje wykrycie kolizji z podłożem (floor_y) """
+    def update_player(self, player: Player, delta_time: float, screen: pygame.Surface):
+        assert isinstance(player, Player), "player musi być instancją klasy Player"
+        assert isinstance(delta_time, float) and delta_time > 0, "delta_time musi być dodatnią liczbą zmiennoprzecinkową"
+        assert isinstance(screen, pygame.Surface), "screen musi być instancją pygame.Surface"
+
+        self.apply_gravity(player, delta_time)
+        player.y += player.velocity_y * delta_time
+        player.update_size(screen)
+
+        if self.check_player_collision_with_floor(player):
+            player.y = self.floor_y - player.outer_rect.height // 2
+            player.velocity_y = 0
+            player.on_ground = True
+        else:
+            player.on_ground = False
+
+    """ Powoduje skok gracza: nadaje prędkość w górę, sprawdza, czy gracz jest na ziemi, zanim pozwoli na skok """
+    def player_jump(self, player: Player):
+        assert isinstance(player, Player), "player musi być instancją klasy Player"
+
+        if player.on_ground:
+            player.velocity_y = self.jump_force
+            player.on_ground = False
+
+    """ Zwraca True, jeżeli gracz dotknął podłoża """
+    def check_player_collision_with_floor(self, player: Player) -> bool:
+        assert isinstance(player, Player), "player musi być instancją klasy Player"
+        return player.outer_rect.bottom >= self.floor_y
+
+    """ Zwraca True, jeśli gracz zderzył się z przeszkodą lub spadł poza ekran """
+    def is_game_over(self, player: Player, obstacles: list[pygame.Rect]) -> bool:
+        assert isinstance(player, Player), "player musi być instancją klasy Player"
+        assert isinstance(obstacles, list) and all(isinstance(rect, pygame.Rect) for rect in obstacles), "rect musi być instancją pygame.Rect"
+
+        if player.y > config.SCREEN_HEIGHT:
+            return True
+
+        for obstacle in obstacles:
+            if self.check_player_collision_with_object(player, obstacle):
+                return True
+
+        return False
+
+    def reset_player(self, player: Player):
+        assert isinstance(player, Player), "player musi być instancją klasy Player"
+
+        player.x = 100
+        player.y = self.floor_y
+        player.velocity_y = 0
+        player.on_ground = True
+
+
+    def apply_gravity(self, player: Player, delta_time: float):
+        assert isinstance(player, Player), "player musi być instancją klasy Player"
+        assert isinstance(delta_time, float) and delta_time > 0, "delta_time musi być dodatnią liczbą zmiennoprzecinkową"
+        player.velocity_y += self.gravity * delta_time

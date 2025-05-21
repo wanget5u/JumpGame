@@ -24,11 +24,6 @@ class Button:
         self.width = width
         self.height = height
 
-        self.rel_x = x
-        self.rel_y = y
-        self.rel_width = width
-        self.rel_height = height
-
         self.rect = pygame.Rect(x, y, width, height)
         self.rect.center = (x, y)
 
