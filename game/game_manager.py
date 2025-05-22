@@ -26,10 +26,12 @@ class GameManager:
         self.ui_manager = UIManager()
         self.ui_manager.init()
 
-        self.engine = Engine(config.FLOOR_Y)
         self.floor = Floor(config.FLOOR_Y)
+        self.engine = Engine(self.floor)
 
         self.player = Player()
+
+        self.engine.reset_player(self.player)
 
         self.window_state = WindowState.MENU
         self.running = True
@@ -39,6 +41,7 @@ class GameManager:
 
         if self.window_state == WindowState.GAME:
             self.engine.update_player(self.player, delta_time, self.ui_manager.window)
+            self.handle_held_keys()
 
         self.poll_events()
 
@@ -49,14 +52,15 @@ class GameManager:
             self.game_quit()
 
     def handle_game_events(self, event: pygame.event):
-        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-            self.engine.player_jump(self.player)
-
-        if event.type == pygame.KEYDOWN and event.key == pygame.K_UP:
-            self.engine.player_jump(self.player)
-
         if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
             self.set_window_state(WindowState.PAUSE)
+
+    def handle_held_keys(self):
+        keys = pygame.key.get_pressed()
+        mouse_buttons = pygame.mouse.get_pressed()
+
+        if keys[pygame.K_UP] or mouse_buttons[0]:
+            self.engine.player_jump(self.player)
 
     def handle_pause_events(self, event: pygame.event):
         self.ui_manager.resume_button.handle_event(event, lambda: self.set_window_state(WindowState.GAME))

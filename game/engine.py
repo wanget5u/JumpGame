@@ -2,18 +2,19 @@ import pygame
 
 from config import config
 from game.player import Player
+from game.floor import Floor
 
 class Engine:
-    def __init__(self, floor_y: int):
-        assert isinstance(floor_y, int) and floor_y > 0, "floor_y musi być dodatnią liczbą całkowitą"
+    def __init__(self, floor: Floor):
+        assert isinstance(floor, Floor), "floor musi być instancją klasy Floor"
 
-        self.floor_y = floor_y
-        self.gravity = 3000
-        self.jump_force = -1200
+        self.floor = floor
+        self.gravity = 4500
+        self.jump_force = -1350
 
     def _check_player_coherence(self, player: Player) -> bool:
         assert isinstance(player, Player), "player musi być instancją klasy Player"
-        return player.outer_rect.bottom <= self.floor_y
+        return player.outer_rect.bottom <= self.floor.floor_y
 
     """ Sprawdza kolizję gracza z przeszkodą """
     def check_player_collision_with_object(self, player: Player, obstacle_rect: pygame.Rect) -> bool:
@@ -33,7 +34,7 @@ class Engine:
         player.update_size(screen)
 
         if self.check_player_collision_with_floor(player):
-            player.y = self.floor_y - player.outer_rect.height // 2
+            player.y = self.floor.floor_y - player.outer_rect.height // 2
             player.velocity_y = 0
             player.on_ground = True
         else:
@@ -46,11 +47,12 @@ class Engine:
         if player.on_ground:
             player.velocity_y = self.jump_force
             player.on_ground = False
+            player.rotation = (player.rotation + 180) % 360
 
     """ Zwraca True, jeżeli gracz dotknął podłoża """
     def check_player_collision_with_floor(self, player: Player) -> bool:
         assert isinstance(player, Player), "player musi być instancją klasy Player"
-        return player.outer_rect.bottom >= self.floor_y
+        return player.outer_rect.bottom >= self.floor.floor_y
 
     """ Zwraca True, jeśli gracz zderzył się z przeszkodą lub spadł poza ekran """
     def is_game_over(self, player: Player, obstacles: list[pygame.Rect]) -> bool:
@@ -70,10 +72,10 @@ class Engine:
         assert isinstance(player, Player), "player musi być instancją klasy Player"
 
         player.x = 100
-        player.y = self.floor_y
+        player.y = self.floor.floor_y
         player.velocity_y = 0
+        player.rotation = 0
         player.on_ground = True
-
 
     def apply_gravity(self, player: Player, delta_time: float):
         assert isinstance(player, Player), "player musi być instancją klasy Player"

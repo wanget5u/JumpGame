@@ -6,6 +6,7 @@ class Floor:
     def __init__(self, y: int):
         assert isinstance(y, int) and y > 0, "y musi być dodatnią liczbą całkowitą"
 
+        self.floor_y_ratio = y / config.SCREEN_HEIGHT
         self.floor_y = y
 
         self.outer_rect = pygame.Rect(0, self.floor_y, config.SCREEN_WIDTH, config.FLOOR_OUTER_HEIGHT)
@@ -13,7 +14,6 @@ class Floor:
 
         self.inner_rect = pygame.Rect(0, self.floor_y, config.SCREEN_WIDTH, config.SCREEN_HEIGHT - self.floor_y)
         self.inner_rect.centerx = config.SCREEN_WIDTH // 2
-
 
     def draw(self, screen: pygame.Surface):
         assert isinstance(screen, pygame.Surface), "screen musi być instancją pygame.Surface"
@@ -28,13 +28,13 @@ class Floor:
 
         screen_width, screen_height = screen.get_size()
 
-        scaled_floor_y = int(screen_height * (self.floor_y / config.SCREEN_HEIGHT))
+        self.floor_y = int(screen_height * self.floor_y_ratio)
 
         outer_height = int (screen_height * (config.FLOOR_OUTER_HEIGHT / config.SCREEN_HEIGHT))
 
-        self.outer_rect = pygame.Rect(0, scaled_floor_y, screen_width, outer_height)
+        self.outer_rect = pygame.Rect(0, self.floor_y, screen_width, outer_height)
         self.outer_rect.centerx = screen_width // 2
 
-        inner_height = screen_height - scaled_floor_y
-        self.inner_rect = pygame.Rect(0, scaled_floor_y, screen_width, inner_height)
+        inner_height = screen_height - self.floor_y
+        self.inner_rect = pygame.Rect(0, self.floor_y, screen_width, inner_height)
         self.inner_rect.centerx = screen_width // 2

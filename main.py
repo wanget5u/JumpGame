@@ -16,4 +16,6 @@ if __name__ == "__main__":
         game_manager.update(delta_time)
         game_manager.render()
 
+        pygame.display.flip()
+
     pygame.quit()

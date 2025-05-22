@@ -20,6 +20,7 @@ class Player:
         self.speed = config.PLAYER_SPEED
 
         self.velocity_y = 0
+        self.rotation = 0
         self.on_ground = False
 
     def draw(self, screen: pygame.Surface):
