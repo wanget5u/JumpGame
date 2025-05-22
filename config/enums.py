@@ -6,3 +6,4 @@ class WindowState(Enum):
     PAUSE = auto()
     SELECT = auto()
     EDIT = auto()
+    EDIT_CONFIRM = auto()

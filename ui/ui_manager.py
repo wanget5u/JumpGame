@@ -6,6 +6,8 @@ from config.enums import WindowState
 from game.player import Player
 from game.floor import Floor
 
+from game.level_editor import LevelEditor
+
 from ui.label import Label
 from ui.button import Button
 
@@ -36,6 +38,11 @@ class UIManager:
         self.level_button = None
         self.levels = None
 
+        # [EDIT CONFIRM]
+        self.edit_confirm_title_label = None
+        self.edit_confirm_yes_button = None
+        self.edit_confirm_no_button = None
+
         self.screen_width = config.SCREEN_WIDTH
         self.screen_height = config.SCREEN_HEIGHT
 
@@ -51,6 +58,7 @@ class UIManager:
         self.pause_view_init()
         self.game_view_init()
         self.level_select_init()
+        self.edit_confirm_view_init()
 
     def menu_view_init(self):
         self.title_label = Label(
@@ -131,10 +139,24 @@ class UIManager:
                 self.create_level_button()
                 self.page_label.set_text(f"Page {self.current_page}")
 
-    def render(self, window_state: WindowState, player: Player, floor: Floor):
+    def edit_confirm_view_init(self):
+        self.edit_confirm_title_label = Label(
+            self.screen_width // 2, self.screen_height // 2 - 185,
+            "Do you want to quit without saving?", 100)
+
+        self.edit_confirm_yes_button = Button(
+            self.screen_width // 2 - 120, self.screen_height // 2,
+            220, 80, "Yes")
+
+        self.edit_confirm_no_button = Button(
+            self.screen_width // 2 + 120, self.screen_height // 2,
+            220, 80, "No")
+
+    def render(self, window_state: WindowState, player: Player, floor: Floor, level_editor: LevelEditor):
         assert isinstance(window_state, WindowState), "window_state musi być obiektem instancji WindowState"
         assert isinstance(player, Player), "player musi być instancją klasy Player"
         assert isinstance(floor, Floor), "floor musi być instancją klasy Floor"
+        assert isinstance(level_editor, LevelEditor), "level_editor musi być instancją klasy LevelEditor"
 
         if window_state == WindowState.MENU:
             self.window.fill(config.BACKGROUND_COLOR)
@@ -183,5 +205,21 @@ class UIManager:
 
         if window_state == WindowState.EDIT:
             self.window.fill(tuple(int(c * 1.2) for c in config.BACKGROUND_COLOR))
+
+            level_editor.render()
+
+        if window_state == WindowState.EDIT_CONFIRM:
+            self.window.fill(tuple(int(c * 1.2) for c in config.BACKGROUND_COLOR))
+
+            level_editor.render()
+
+            transparent_surface = pygame.Surface(self.window.get_size(), pygame.SRCALPHA)
+            transparent_surface.fill(config.BACKGROUND_PAUSE_COLOR)
+
+            self.window.blit(transparent_surface, (0, 0))
+
+            self.edit_confirm_title_label.draw(self.window)
+            self.edit_confirm_yes_button.draw(self.window)
+            self.edit_confirm_no_button.draw(self.window)
 
         pygame.display.update()

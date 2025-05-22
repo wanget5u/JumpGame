@@ -1,5 +1,4 @@
-import json
-import os.path
+import json, os
 
 import pygame.event
 
@@ -10,6 +9,7 @@ from config.enums import WindowState
 
 from ui.ui_manager import UIManager
 
+from game.level_editor import LevelEditor
 from game.player import Player
 from game.engine import Engine
 from game.floor import Floor
@@ -21,11 +21,12 @@ class GameManager:
 
         self.floor = None
         self.player = None
+        self.levels = {}
 
+        # [MANAGERS]
         self.ui_manager = None
         self.engine = None
-
-        self.levels = {}
+        self.level_editor = None
 
     def init(self):
         self.load_levels()
@@ -34,7 +35,9 @@ class GameManager:
         self.ui_manager.init(self.levels)
 
         self.floor = Floor(config.FLOOR_Y)
+
         self.engine = Engine(self.floor)
+        self.level_editor = LevelEditor(self.ui_manager.window, self.levels, self.floor)
 
         self.player = Player()
 
@@ -89,8 +92,17 @@ class GameManager:
             self.set_window_state(WindowState.MENU)
 
     def handle_level_editor_events(self, event: pygame.event):
+        self.level_editor.handle_event(event)
+
         if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-            self.set_window_state(WindowState.MENU)
+            self.set_window_state(WindowState.EDIT_CONFIRM)
+
+    def handle_edit_confirm_events(self, event):
+        self.ui_manager.edit_confirm_yes_button.handle_event(event, lambda: self.set_window_state(WindowState.MENU))
+        self.ui_manager.edit_confirm_no_button.handle_event(event, lambda: self.set_window_state(WindowState.EDIT))
+
+        if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+            self.set_window_state(WindowState.EDIT)
 
     def is_running(self) -> bool:
         return self.running
@@ -99,7 +111,7 @@ class GameManager:
         self.running = False
 
     def render(self):
-        self.ui_manager.render(self.window_state, self.player, self.floor)
+        self.ui_manager.render(self.window_state, self.player, self.floor, self.level_editor)
 
     def set_window_state(self, window_state: WindowState):
         assert isinstance(window_state, WindowState), "window_state musi być instancją WindowState"
@@ -155,3 +167,6 @@ class GameManager:
 
             elif self.window_state == WindowState.EDIT:
                 self.handle_level_editor_events(event)
+
+            elif self.window_state == WindowState.EDIT_CONFIRM:
+                self.handle_edit_confirm_events(event)
