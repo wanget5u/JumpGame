@@ -20,8 +20,8 @@ class Floor:
 
         self.update_size(screen)
 
-        pygame.draw.rect(screen, config.FLOOR_OUTER_COLOR, self.outer_rect)
         pygame.draw.rect(screen, config.FLOOR_INNER_COLOR, self.inner_rect)
+        pygame.draw.rect(screen, config.FLOOR_OUTER_COLOR, self.outer_rect)
 
     def update_size(self, screen: pygame.Surface):
         assert isinstance(screen, pygame.Surface), "screen musi być instancją pygame.Surface"
@@ -36,5 +36,11 @@ class Floor:
         self.outer_rect.centerx = screen_width // 2
 
         inner_height = screen_height - self.floor_y
+
         self.inner_rect = pygame.Rect(0, self.floor_y, screen_width, inner_height)
         self.inner_rect.centerx = screen_width // 2
+
+    def get_screen_floor_y(self, screen: pygame.Surface) -> int:
+        assert isinstance(screen, pygame.Surface), "screen musi być instancją pygame.Surface"
+        screen_height = screen.get_height()
+        return int(screen_height * self.floor_y_ratio)

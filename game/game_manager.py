@@ -95,6 +95,11 @@ class GameManager:
 
         self.ui_manager.window = pygame.display.set_mode((new_width, new_height), pygame.RESIZABLE)
 
+        if self.player and self.floor:
+            if self.player.on_ground:
+                floor_y = self.floor.get_screen_floor_y(self.ui_manager.window)
+                self.player.y = floor_y - self.player.outer_rect.height / 2
+
     def poll_events(self):
         for event in pygame.event.get():
 
