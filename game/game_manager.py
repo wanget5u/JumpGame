@@ -1,3 +1,6 @@
+import json
+import os.path
+
 import pygame.event
 
 from pygame import VIDEORESIZE
@@ -22,9 +25,13 @@ class GameManager:
         self.ui_manager = None
         self.engine = None
 
+        self.levels = {}
+
     def init(self):
+        self.load_levels()
+
         self.ui_manager = UIManager()
-        self.ui_manager.init()
+        self.ui_manager.init(self.levels)
 
         self.floor = Floor(config.FLOOR_Y)
         self.engine = Engine(self.floor)
@@ -41,26 +48,26 @@ class GameManager:
 
         if self.window_state == WindowState.GAME:
             self.engine.update_player(self.player, delta_time, self.ui_manager.window)
-            self.handle_held_keys()
 
         self.poll_events()
 
     def handle_menu_events(self, event: pygame.event):
-        self.ui_manager.start_button.handle_event(event, lambda: self.set_window_state(WindowState.GAME))
+        self.ui_manager.start_button.handle_event(event, lambda: self.set_window_state(WindowState.SELECT))
+        self.ui_manager.level_editor_button.handle_event(event, lambda: self.set_window_state(WindowState.EDIT))
+        self.ui_manager.exit_button.handle_event(event, lambda: self.game_quit())
 
         if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
             self.game_quit()
 
     def handle_game_events(self, event: pygame.event):
-        if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-            self.set_window_state(WindowState.PAUSE)
-
-    def handle_held_keys(self):
         keys = pygame.key.get_pressed()
         mouse_buttons = pygame.mouse.get_pressed()
 
         if keys[pygame.K_UP] or mouse_buttons[0]:
             self.engine.player_jump(self.player)
+
+        if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+            self.set_window_state(WindowState.PAUSE)
 
     def handle_pause_events(self, event: pygame.event):
         self.ui_manager.resume_button.handle_event(event, lambda: self.set_window_state(WindowState.GAME))
@@ -68,6 +75,22 @@ class GameManager:
 
         if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
             self.set_window_state(WindowState.GAME)
+
+    def handle_level_select_events(self, event: pygame.event):
+        self.ui_manager.level_button.handle_event(event, lambda: self.set_window_state(WindowState.GAME))
+
+        if event.type == pygame.KEYDOWN and event.key == pygame.K_LEFT:
+            self.ui_manager.change_level_select_page("left")
+
+        if event.type == pygame.KEYDOWN and event.key == pygame.K_RIGHT:
+            self.ui_manager.change_level_select_page("right")
+
+        if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+            self.set_window_state(WindowState.MENU)
+
+    def handle_level_editor_events(self, event: pygame.event):
+        if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+            self.set_window_state(WindowState.MENU)
 
     def is_running(self) -> bool:
         return self.running
@@ -100,6 +123,15 @@ class GameManager:
                 floor_y = self.floor.get_screen_floor_y(self.ui_manager.window)
                 self.player.y = floor_y - self.player.outer_rect.height / 2
 
+    def load_levels(self):
+        BASE_DIR  = os.path.dirname(os.path.abspath(__file__))
+        PROJECT_DIR = os.path.abspath(os.path.join(BASE_DIR, ".."))
+
+        levels_path = os.path.join(PROJECT_DIR, "levels", "levels.json")
+
+        with open(levels_path, "r") as level:
+            self.levels = json.load(level)
+
     def poll_events(self):
         for event in pygame.event.get():
 
@@ -117,3 +149,9 @@ class GameManager:
 
             elif self.window_state == WindowState.PAUSE:
                 self.handle_pause_events(event)
+
+            elif self.window_state == WindowState.SELECT:
+                self.handle_level_select_events(event)
+
+            elif self.window_state == WindowState.EDIT:
+                self.handle_level_editor_events(event)

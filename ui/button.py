@@ -27,15 +27,14 @@ class Button:
         self.rect = pygame.Rect(x, y, width, height)
         self.rect.center = (x, y)
 
-        # Ustawienia tekstu i kolorów
         self.text = text
         self.color = color
         self.color_hover = tuple(min(255, int(c * 1.2)) for c in color)  # Kolor przy najechaniu kursorem
         self.color_click = tuple(min(255, int(c * 1.4)) for c in color)  # Kolor przy kliknięciu
         self.text_color = text_color
+        self.text_size = text_size
         self.font = pygame.font.SysFont(None, int(text_size))
 
-        # Stan przycisku
         self.is_pressed = False
 
     """Rysowanie przycisku na ekranie."""
@@ -44,7 +43,6 @@ class Button:
 
         self.update_size(screen)
 
-        # Wybór koloru przycisku w zależności od interakcji
         if self.is_pressed:
             current_color = self.color_click
         elif self.is_hovered():
@@ -52,7 +50,6 @@ class Button:
         else:
             current_color = self.color
 
-        # Rysowanie prostokąta przycisku
         pygame.draw.rect(screen, current_color, self.rect, border_radius=4)
         text_surface = self.font.render(self.text, True, self.text_color)
         text_rect = text_surface.get_rect(center=self.rect.center)
@@ -71,8 +68,7 @@ class Button:
 
         self.rect = pygame.Rect(0, 0, rect_width, rect_height)
         self.rect.center = (rect_x, rect_y)
-        text_size = int(min(rect_width, rect_height) * 0.8)
-        self.font = pygame.font.SysFont(None, max(24, text_size))
+        self.font = pygame.font.SysFont(None, max(24, self.text_size))
 
     """Sprawdzanie, czy kursor znajduje się nad przyciskiem."""
     def is_hovered(self):
@@ -82,16 +78,13 @@ class Button:
     def handle_event(self, event, on_click_event: callable):
         assert callable(on_click_event), "on_click_event musi być callable"
 
-        # Kliknięcie lewym przyciskiem myszy na przycisk
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and self.is_hovered():
             self.is_pressed = True
 
-        # Ruch myszy poza przyciskiem resetuje stan kliknięcia
         elif event.type == pygame.MOUSEMOTION and not self.is_hovered():
             self.is_pressed = False
 
-        # Zwolnienie lewego przycisku myszy
         elif event.type == pygame.MOUSEBUTTONUP and event.button == 1:
             if self.is_pressed and self.is_hovered():
-                on_click_event()  # Wywołanie funkcji przypisanej do kliknięcia
+                on_click_event()
             self.is_pressed = False

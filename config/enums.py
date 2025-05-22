@@ -4,3 +4,5 @@ class WindowState(Enum):
     MENU = auto()
     GAME = auto()
     PAUSE = auto()
+    SELECT = auto()
+    EDIT = auto()
