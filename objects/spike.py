@@ -52,6 +52,6 @@ class Spike:
 
         self.inner_points = [
             (x, y - inner_height),
-            (x - inner_width // 2, y),
-            (x + inner_width // 2, y)
+            (x - inner_width // 2, y - 2),
+            (x + inner_width // 2, y - 2)
         ]

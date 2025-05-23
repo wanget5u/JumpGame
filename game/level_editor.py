@@ -4,7 +4,13 @@ import pygame, os
 
 from game.floor import Floor
 from ui.button import Button
+from ui.label import Label
 from config import config
+
+from objects.block import Block
+from objects.spike import Spike
+# from objects.jump_pad import
+# from objects.jump_orb import
 
 class LevelEditor:
     def __init__(self, window: pygame.Surface, levels: list, floor: Floor):
@@ -18,6 +24,7 @@ class LevelEditor:
         self.current_level = self.create_empty_level()
 
         self.floor = floor
+        self.is_saved = False
 
         self.screen_width = config.SCREEN_WIDTH
         self.screen_height = config.SCREEN_HEIGHT
@@ -25,13 +32,13 @@ class LevelEditor:
         # [EDITOR STATE]
         self.grid_size = config.GRID_SIZE
         self.camera_offset_x = 0
-        self.camera_offset_y = 0
 
         self.selected_object = None
         self.selected_object_index = -1
 
         # select, delete, block, spike, jump_pad, jump_orb
         self.selected_tool = "select"
+        self.selected_tool_label = None
         self.show_grid = True
 
         # [UI ELEMENTS]
@@ -61,18 +68,18 @@ class LevelEditor:
         self.editor_view_init()
 
     def editor_view_init(self):
-        self.select_button = Button(130, 740, 220, 80,"Select")
-        self.delete_button = Button(130, 840, 220, 80,"Delete")
+        self.select_button = Button(120, 770, 220, 70,"Select")
+        self.delete_button = Button(120, 850, 220, 70,"Delete")
 
-        self.block_button = Button(370, 740, 220, 80,"Block")
-        self.spike_button = Button(370, 840, 220, 80,"Spike")
+        self.block_button = Button(350, 770, 220, 70,"Block")
+        self.spike_button = Button(350, 850, 220, 70,"Spike")
 
-        self.jump_pad_button = Button(610, 740, 220, 80,"Jump Pad")
-        self.jump_orb_button = Button(610, 840, 220, 80,"Jump Orb")
+        self.jump_pad_button = Button(580, 770, 220, 70,"Jump Pad")
+        self.jump_orb_button = Button(580, 850, 220, 70,"Jump Orb")
 
-        self.save_button = Button(1470, 740, 220, 80,"Save")
-        self.load_button = Button(1470, 840, 220, 80,"Load")
-        self.exit_button = Button(1230, 840, 220, 80,"Exit")
+        self.save_button = Button(1480, 770, 220, 70,"Save")
+        self.load_button = Button(1480, 850, 220, 70,"Load")
+        self.exit_button = Button(1250, 850, 220, 70,"Exit")
 
         self.buttons = \
             {
@@ -86,6 +93,10 @@ class LevelEditor:
                 "load" : self.load_button,
                 "exit" : self.exit_button
             }
+
+        self.selected_tool_label = Label(
+            920, 850, "")
+        self.change_tool("select")
 
     def save_levels(self):
         BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -118,11 +129,180 @@ class LevelEditor:
         print(f"Wczytano poziom {self.name_input}.")
 
     def create_empty_level(self) -> list:
-        pass
+        return \
+            {
+            "index": str(len(self.levels) + 1),
+            "name": "New Level",
+            "difficulty": "easy",
+            "layout": []
+            }
 
-    def handle_event(self, event: pygame.event):
-        pass
+    def change_tool(self, tool_name: str):
+        assert isinstance(tool_name, str), "tool_name musi być stringiem"
+        self.selected_tool = tool_name
+        self.selected_tool_label.set_text("Current tool: " + tool_name[0].upper() + tool_name[1::].replace("_", " "))
+
+    def select_object_at_position(self, position: tuple):
+        assert isinstance(position, tuple) and all(isinstance(x, int) for x in position), "position musi być krotką 2 liczb całkowitych"
+
+        self.selected_object = None
+        self.selected_object_index = -1
+
+        for x in range(len(self.current_level["layout"]) - 1, -1, -1):
+            obj = self.current_level["layout"][x]
+            if self.is_point_in_object(position, obj):
+                self.selected_object = obj
+                self.selected_object_index = x
+                break
+
+    def is_point_in_object(self, position, obj):
+        assert isinstance(position, tuple) and all(isinstance(x, int) for x in position), "position musi być krotką 2 liczb całkowitych"
+
+        x, y = position
+
+        if obj["type"] == "block":
+            temp_block = Block(obj["x"], obj["y"])
+            temp_block.update_size(self.window)
+            return temp_block.outer_rect.collidepoint(self.world_to_screen((x, y)))
+        elif obj["type"] == "spike":
+            radius = 20
+            dx = x - obj["x"]
+            dy = y - obj["y"]
+            return (dx * dx + dy * dy) <= radius * radius
+        elif obj["type"] in ["jump_pad", "jump_orb"]:
+            radius = 20
+            dx = x - obj["x"]
+            dy = y - obj["y"]
+            return (dx * dx + dy * dy) <= radius * radius
+
+        return False
+
+    def screen_to_world(self, screen_pos):
+        assert isinstance(screen_pos, tuple) and all(isinstance(x, int) for x in screen_pos), "screen_pos musi być krotką 2 liczb całkowitych"
+        x, y = screen_pos
+        return x - self.camera_offset_x, y
+
+    def world_to_screen(self, world_pos: tuple):
+        assert isinstance(world_pos, tuple) and all(isinstance(x, int) for x in world_pos), "world_pos musi być krotką 2 liczb całkowitych"
+        x, y = world_pos
+        return x + self.camera_offset_x, y
+
+    def draw_grid(self):
+        screen_width, screen_height = self.window.get_size()
+
+        start_x = (self.camera_offset_x % self.grid_size)
+        start_y = 0
+
+        grid_surface = pygame.Surface((screen_width, screen_height), pygame.SRCALPHA)
+
+        for x in range(start_x, screen_width, self.grid_size):
+            line_color = self.grid_color
+            if x == config.LEVEL_BEGIN_X:
+                line_color = config.GRID_START_LINE_COLOR
+            pygame.draw.line(grid_surface, line_color, (x, 0), (x, screen_height - self.toolbar_height))
+
+        for y in range(start_y, screen_height - self.toolbar_height, self.grid_size):
+            pygame.draw.line(grid_surface, self.grid_color, (0, y), (screen_width, y))
+
+        self.window.blit(grid_surface, (0, 0))
+
+    def draw_objects(self):
+        for x, obj in enumerate(self.current_level["layout"]):
+            is_selected = (x == self.selected_object_index)
+            self.draw_object(obj, is_selected)
+
+    def draw_object(self, obj, is_selected):
+        assert isinstance(is_selected, bool), "is_selected musi być wartością boolowską"
+
+        obj_type = obj["type"]
+        screen_pos = self.world_to_screen((obj["x"], obj["y"]))
+
+        if is_selected:
+            highlight_color = config.HIGHLIGHT_COLOR
+
+            if obj_type == "block":
+                rect = pygame.Rect(
+                    screen_pos[0] - self.grid_size // 2 - 2,
+                    screen_pos[1] - self.grid_size // 2 - 2,
+                    self.grid_size + 4,
+                    self.grid_size + 4
+                )
+                pygame.draw.rect(self.window, highlight_color, rect, 2)
+            else:
+                pygame.draw.circle(self.window, highlight_color, (screen_pos[0] + self.grid_size // 2, screen_pos[1] + self.grid_size // 2), self.grid_size // 2, 2)
+
+        if obj_type == "block":
+            block = Block(screen_pos[0], screen_pos[1])
+            block.draw(self.window)
+        elif obj_type == "spike":
+            spike = Spike(
+                screen_pos[0] + self.grid_size // 2,
+                screen_pos[1] + self.grid_size)
+            spike.draw(self.window)
+
+    def add_object(self, obj_type: str, position):
+        assert isinstance(position, tuple) and all(isinstance(x, int) for x in position), "position musi być krotką 2 liczb całkowitych"
+
+        world_pos = self.screen_to_world(pygame.mouse.get_pos())
+
+        x = (world_pos[0] // self.grid_size) * self.grid_size
+        y = (world_pos[1] // self.grid_size) * self.grid_size
+
+
+        if obj_type == "block":
+            x += self.grid_size // 2
+            y += self.grid_size // 2
+
+        new_obj = {"type": obj_type, "x": x, "y": y}
+
+        self.current_level["layout"].append(new_obj)
+        self.selected_object = new_obj
+        self.selected_object_index = len(self.current_level["layout"]) - 1
+
+    def delete_object(self):
+        if self.selected_object_index >= 0:
+            del self.current_level["layout"][self.selected_object_index]
+            self.selected_object = None
+            self.selected_object_index = -1
+
+    def handle_event(self, event: pygame.event, exit_button_event):
+        self.select_button.handle_event(event, lambda: self.change_tool("select"))
+        self.delete_button.handle_event(event, lambda: self.change_tool("delete"))
+        self.block_button.handle_event(event, lambda: self.change_tool("block"))
+        self.spike_button.handle_event(event, lambda: self.change_tool("spike"))
+        self.jump_pad_button.handle_event(event, lambda: self.change_tool("jump_pad"))
+        self.jump_orb_button.handle_event(event, lambda: self.change_tool("jump_orb"))
+
+        self.save_button.handle_event(event, lambda: 1==1)
+        self.load_button.handle_event(event, lambda: 1==1)
+
+        self.exit_button.handle_event(event, exit_button_event)
+
+        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+            mouse_pos = pygame.mouse.get_pos()
+            world_pos = self.screen_to_world(mouse_pos)
+
+            match self.selected_tool:
+                case "select":
+                    self.select_object_at_position(world_pos)
+                case "delete":
+                    self.delete_object()
+                case "block":
+                    self.add_object(self.selected_tool, world_pos)
+                case "spike":
+                    self.add_object(self.selected_tool, world_pos)
+                case "jump_pad":
+                    pass
+                case "jump_orb":
+                    pass
 
     def render(self):
+        self.draw_grid()
+        self.draw_objects()
+
+        self.floor.draw(self.window)
+        self.selected_tool_label.draw(self.window)
+
+
         for name, button in self.buttons.items():
             button.draw(self.window)

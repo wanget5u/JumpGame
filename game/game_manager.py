@@ -92,7 +92,13 @@ class GameManager:
             self.set_window_state(WindowState.MENU)
 
     def handle_level_editor_events(self, event: pygame.event):
-        self.level_editor.handle_event(event)
+        def exit_button_event():
+            if self.level_editor.is_saved:
+                self.set_window_state(WindowState.MENU)
+            else:
+                self.set_window_state(WindowState.EDIT_CONFIRM)
+
+        self.level_editor.handle_event(event, exit_button_event)
 
         if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
             self.set_window_state(WindowState.EDIT_CONFIRM)

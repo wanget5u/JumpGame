@@ -204,7 +204,7 @@ class UIManager:
             self.page_label.draw(self.window)
 
         if window_state == WindowState.EDIT:
-            self.window.fill(tuple(int(c * 1.2) for c in config.BACKGROUND_COLOR))
+            self.window.fill(tuple(int(c * 0.8) for c in config.BACKGROUND_COLOR))
 
             level_editor.render()
 

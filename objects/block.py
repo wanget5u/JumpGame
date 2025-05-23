@@ -36,7 +36,7 @@ class Block:
         rect_inner_size = int(screen_height * (self.inner_size / config.SCREEN_HEIGHT))
 
         rect_x = int(screen_width * (self.x / config.SCREEN_WIDTH))
-        rect_y = int(screen_height * (self.x / config.SCREEN_HEIGHT))
+        rect_y = int(screen_height * (self.y / config.SCREEN_HEIGHT))
 
         self.outer_rect = pygame.Rect(0, 0, rect_outer_size, rect_outer_size)
         self.outer_rect.center = (rect_x, rect_y)
