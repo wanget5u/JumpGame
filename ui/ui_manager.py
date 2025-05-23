@@ -10,6 +10,7 @@ from game.level_editor import LevelEditor
 
 from ui.label import Label
 from ui.button import Button
+from ui.text_input_field import TextInputField
 
 class UIManager:
     def __init__(self):
@@ -43,6 +44,20 @@ class UIManager:
         self.edit_confirm_yes_button = None
         self.edit_confirm_no_button = None
 
+        # [SAVE PROMPT]
+        self.save_prompt_title_label = None
+
+        self.level_name_title_label = None
+        self.level_name_input_field = None
+
+        self.difficulty_name_title_label = None
+        self.difficulty_name_input_field = None
+
+        self.save_prompt_save_button = None
+        self.save_prompt_cancel_button = None
+
+        # [LOAD PROMPT]
+
         self.screen_width = config.SCREEN_WIDTH
         self.screen_height = config.SCREEN_HEIGHT
 
@@ -59,6 +74,7 @@ class UIManager:
         self.game_view_init()
         self.level_select_init()
         self.edit_confirm_view_init()
+        self.save_prompt_init()
 
     def menu_view_init(self):
         self.title_label = Label(
@@ -71,7 +87,7 @@ class UIManager:
 
         self.start_button = Button(
             self.screen_width // 2, self.screen_height // 2,
-            220, 80,"Start")
+            220, 80, "Start")
 
         self.level_editor_button = Button(
             self.screen_width // 2, self.screen_height // 2 + 100,
@@ -110,6 +126,51 @@ class UIManager:
 
         self.create_level_button()
 
+    def edit_confirm_view_init(self):
+        self.edit_confirm_title_label = Label(
+            self.screen_width // 2, self.screen_height // 2 - 185,
+            "Do you want to quit without saving?", 100)
+
+        self.edit_confirm_yes_button = Button(
+            self.screen_width // 2 - 120, self.screen_height // 2,
+            220, 80, "Yes")
+
+        self.edit_confirm_no_button = Button(
+            self.screen_width // 2 + 120, self.screen_height // 2,
+            220, 80, "No")
+
+    def save_prompt_init(self):
+        self.save_prompt_title_label = Label(
+            self.screen_width // 2, self.screen_height // 2 - 185,
+            "Save level as", 200)
+
+        # [NAME]
+        self.level_name_title_label = Label(
+            self.screen_width // 2 - 380, self.screen_height // 2,
+            "Name", 72)
+
+        self.level_name_input_field = TextInputField(
+            self.screen_width // 2, self.screen_height // 2,
+            500, 80, "")
+
+        # [DIFFICULTY]
+        self.difficulty_name_title_label = Label(
+            self.screen_width // 2 - 380, self.screen_height // 2 + 100,
+            "Difficulty", 72)
+
+        self.difficulty_name_input_field = TextInputField(
+            self.screen_width // 2, self.screen_height // 2 + 100,
+            500, 80, "")
+
+        # [DIALOG OPTIONS]
+        self.save_prompt_save_button = Button(
+            self.screen_width // 2 - 120, self.screen_height // 2 + 300,
+            220, 80, "Save")
+
+        self.save_prompt_cancel_button = Button(
+            self.screen_width // 2 + 120, self.screen_height // 2 + 300,
+            220, 80, "Cancel")
+
     def create_level_button(self):
         current_level = None
 
@@ -138,19 +199,6 @@ class UIManager:
                 self.current_page += 1
                 self.create_level_button()
                 self.page_label.set_text(f"Page {self.current_page}")
-
-    def edit_confirm_view_init(self):
-        self.edit_confirm_title_label = Label(
-            self.screen_width // 2, self.screen_height // 2 - 185,
-            "Do you want to quit without saving?", 100)
-
-        self.edit_confirm_yes_button = Button(
-            self.screen_width // 2 - 120, self.screen_height // 2,
-            220, 80, "Yes")
-
-        self.edit_confirm_no_button = Button(
-            self.screen_width // 2 + 120, self.screen_height // 2,
-            220, 80, "No")
 
     def render(self, window_state: WindowState, player: Player, floor: Floor, level_editor: LevelEditor):
         assert isinstance(window_state, WindowState), "window_state musi być obiektem instancji WindowState"
@@ -205,12 +253,10 @@ class UIManager:
 
         if window_state == WindowState.EDIT:
             self.window.fill(tuple(int(c * 0.8) for c in config.BACKGROUND_COLOR))
-
             level_editor.render()
 
         if window_state == WindowState.EDIT_CONFIRM:
             self.window.fill(tuple(int(c * 1.2) for c in config.BACKGROUND_COLOR))
-
             level_editor.render()
 
             transparent_surface = pygame.Surface(self.window.get_size(), pygame.SRCALPHA)
@@ -221,5 +267,19 @@ class UIManager:
             self.edit_confirm_title_label.draw(self.window)
             self.edit_confirm_yes_button.draw(self.window)
             self.edit_confirm_no_button.draw(self.window)
+
+        if window_state == WindowState.SAVE_PROMPT:
+            self.window.fill(tuple(int(c * 0.8) for c in config.BACKGROUND_COLOR))
+
+            self.save_prompt_title_label.draw(self.window)
+
+            self.level_name_title_label.draw(self.window)
+            self.level_name_input_field.draw(self.window)
+
+            self.difficulty_name_title_label.draw(self.window)
+            self.difficulty_name_input_field.draw(self.window)
+
+            self.save_prompt_save_button.draw(self.window)
+            self.save_prompt_cancel_button.draw(self.window)
 
         pygame.display.update()

@@ -7,3 +7,5 @@ class WindowState(Enum):
     SELECT = auto()
     EDIT = auto()
     EDIT_CONFIRM = auto()
+    SAVE_PROMPT = auto()
+    LOAD_PROMPT = auto()

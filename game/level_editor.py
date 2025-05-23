@@ -245,9 +245,11 @@ class LevelEditor:
 
         world_pos = self.screen_to_world(pygame.mouse.get_pos())
 
+        if world_pos[1] > self.floor.floor_y:
+            return
+
         x = (world_pos[0] // self.grid_size) * self.grid_size
         y = (world_pos[1] // self.grid_size) * self.grid_size
-
 
         if obj_type == "block":
             x += self.grid_size // 2
@@ -260,12 +262,32 @@ class LevelEditor:
         self.selected_object_index = len(self.current_level["layout"]) - 1
 
     def delete_object(self):
-        if self.selected_object_index >= 0:
-            del self.current_level["layout"][self.selected_object_index]
-            self.selected_object = None
-            self.selected_object_index = -1
+        world_pos = self.screen_to_world(pygame.mouse.get_pos())
 
-    def handle_event(self, event: pygame.event, exit_button_event):
+        if world_pos[1] > self.floor.floor_y:
+            return
+
+        grid_x = world_pos[0] // self.grid_size
+        grid_y = world_pos[1] // self.grid_size
+
+        for index, obj in enumerate(self.current_level["layout"]):
+            obj_x = obj["x"]
+            obj_y = obj["y"]
+
+            if obj["type"] == "block":
+                obj_grid_x = obj_x // self.grid_size
+                obj_grid_y = obj_y // self.grid_size
+            else:
+                obj_grid_x = obj_x // self.grid_size
+                obj_grid_y = obj_y // self.grid_size
+
+            if obj_grid_x == grid_x and obj_grid_y == grid_y:
+                del self.current_level["layout"][index]
+                self.selected_object = None
+                self.selected_object_index = -1
+                break
+
+    def handle_event(self, event: pygame.event, save_button_event, load_button_event, exit_button_event):
         self.select_button.handle_event(event, lambda: self.change_tool("select"))
         self.delete_button.handle_event(event, lambda: self.change_tool("delete"))
         self.block_button.handle_event(event, lambda: self.change_tool("block"))
@@ -273,9 +295,8 @@ class LevelEditor:
         self.jump_pad_button.handle_event(event, lambda: self.change_tool("jump_pad"))
         self.jump_orb_button.handle_event(event, lambda: self.change_tool("jump_orb"))
 
-        self.save_button.handle_event(event, lambda: 1==1)
-        self.load_button.handle_event(event, lambda: 1==1)
-
+        self.save_button.handle_event(event, save_button_event)
+        self.load_button.handle_event(event, load_button_event)
         self.exit_button.handle_event(event, exit_button_event)
 
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
@@ -302,7 +323,6 @@ class LevelEditor:
 
         self.floor.draw(self.window)
         self.selected_tool_label.draw(self.window)
-
 
         for name, button in self.buttons.items():
             button.draw(self.window)

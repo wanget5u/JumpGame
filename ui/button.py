@@ -24,7 +24,7 @@ class Button:
         self.width = width
         self.height = height
 
-        self.rect = pygame.Rect(x, y, width, height)
+        self.rect = pygame.Rect(0, 0, width, height)
         self.rect.center = (x, y)
 
         self.text = text
@@ -68,7 +68,7 @@ class Button:
 
         self.rect = pygame.Rect(0, 0, rect_width, rect_height)
         self.rect.center = (rect_x, rect_y)
-        self.font = pygame.font.SysFont(None, max(24, self.text_size))
+        self.font = pygame.font.SysFont(None, int(self.text_size))
 
     """Sprawdzanie, czy kursor znajduje się nad przyciskiem."""
     def is_hovered(self):

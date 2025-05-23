@@ -54,61 +54,106 @@ class GameManager:
 
         self.poll_events()
 
-    def handle_menu_events(self, event: pygame.event):
-        self.ui_manager.start_button.handle_event(event, lambda: self.set_window_state(WindowState.SELECT))
-        self.ui_manager.level_editor_button.handle_event(event, lambda: self.set_window_state(WindowState.EDIT))
-        self.ui_manager.exit_button.handle_event(event, lambda: self.game_quit())
+    def poll_events(self):
+        for event in pygame.event.get():
 
-        if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-            self.game_quit()
+            if event.type == VIDEORESIZE:
+                self.handle_resize(event.w, event.h)
 
-    def handle_game_events(self, event: pygame.event):
-        keys = pygame.key.get_pressed()
-        mouse_buttons = pygame.mouse.get_pressed()
+            if event.type == pygame.QUIT:
+                self.game_quit()
 
-        if keys[pygame.K_UP] or mouse_buttons[0]:
-            self.engine.player_jump(self.player)
+            if self.window_state == WindowState.MENU:
+                self.ui_manager.start_button.handle_event(event, lambda: self.set_window_state(WindowState.SELECT))
+                self.ui_manager.level_editor_button.handle_event(event, lambda: self.set_window_state(WindowState.EDIT))
+                self.ui_manager.exit_button.handle_event(event, lambda: self.game_quit())
 
-        if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-            self.set_window_state(WindowState.PAUSE)
+                if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                    self.game_quit()
 
-    def handle_pause_events(self, event: pygame.event):
-        self.ui_manager.resume_button.handle_event(event, lambda: self.set_window_state(WindowState.GAME))
-        self.ui_manager.back_pause_button.handle_event(event, lambda: self.set_window_state(WindowState.MENU))
+            elif self.window_state == WindowState.GAME:
+                keys = pygame.key.get_pressed()
+                mouse_buttons = pygame.mouse.get_pressed()
 
-        if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-            self.set_window_state(WindowState.GAME)
+                if keys[pygame.K_UP] or mouse_buttons[0]:
+                    self.engine.player_jump(self.player)
 
-    def handle_level_select_events(self, event: pygame.event):
-        self.ui_manager.level_button.handle_event(event, lambda: self.set_window_state(WindowState.GAME))
+                if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                    self.set_window_state(WindowState.PAUSE)
 
-        if event.type == pygame.KEYDOWN and event.key == pygame.K_LEFT:
-            self.ui_manager.change_level_select_page("left")
+            elif self.window_state == WindowState.PAUSE:
+                self.ui_manager.resume_button.handle_event(event, lambda: self.set_window_state(WindowState.GAME))
+                self.ui_manager.back_pause_button.handle_event(event, lambda: self.set_window_state(WindowState.MENU))
 
-        if event.type == pygame.KEYDOWN and event.key == pygame.K_RIGHT:
-            self.ui_manager.change_level_select_page("right")
+                if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                    self.set_window_state(WindowState.GAME)
 
-        if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-            self.set_window_state(WindowState.MENU)
+            elif self.window_state == WindowState.SELECT:
+                self.ui_manager.level_button.handle_event(event, lambda: self.set_window_state(WindowState.GAME))
 
-    def handle_level_editor_events(self, event: pygame.event):
-        def exit_button_event():
-            if self.level_editor.is_saved:
-                self.set_window_state(WindowState.MENU)
-            else:
-                self.set_window_state(WindowState.EDIT_CONFIRM)
+                if event.type == pygame.KEYDOWN and event.key == pygame.K_LEFT:
+                    self.ui_manager.change_level_select_page("left")
 
-        self.level_editor.handle_event(event, exit_button_event)
+                if event.type == pygame.KEYDOWN and event.key == pygame.K_RIGHT:
+                    self.ui_manager.change_level_select_page("right")
 
-        if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-            self.set_window_state(WindowState.EDIT_CONFIRM)
+                if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                    self.set_window_state(WindowState.MENU)
 
-    def handle_edit_confirm_events(self, event):
-        self.ui_manager.edit_confirm_yes_button.handle_event(event, lambda: self.set_window_state(WindowState.MENU))
-        self.ui_manager.edit_confirm_no_button.handle_event(event, lambda: self.set_window_state(WindowState.EDIT))
+            elif self.window_state == WindowState.EDIT:
+                def save_button_event():
+                    self.set_window_state(WindowState.SAVE_PROMPT)
 
-        if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-            self.set_window_state(WindowState.EDIT)
+                    self.ui_manager.level_name_input_field.text = self.level_editor.current_level["name"]
+                    self.ui_manager.difficulty_name_input_field.text = self.level_editor.current_level["difficulty"]
+
+                def load_button_event():
+                    self.set_window_state(WindowState.LOAD_PROMPT)
+
+                def exit_button_event():
+                    if self.level_editor.is_saved:
+                        self.set_window_state(WindowState.MENU)
+                    else:
+                        self.set_window_state(WindowState.EDIT_CONFIRM)
+
+                self.level_editor.handle_event(
+                    event=event,
+                    save_button_event=save_button_event,
+                    load_button_event=load_button_event,
+                    exit_button_event=exit_button_event)
+
+                if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                    self.set_window_state(WindowState.EDIT_CONFIRM)
+
+            elif self.window_state == WindowState.EDIT_CONFIRM:
+                self.ui_manager.edit_confirm_yes_button.handle_event(event, lambda: self.set_window_state(WindowState.MENU))
+                self.ui_manager.edit_confirm_no_button.handle_event(event, lambda: self.set_window_state(WindowState.EDIT))
+
+                if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                    self.set_window_state(WindowState.EDIT)
+
+            elif self.window_state == WindowState.SAVE_PROMPT:
+                def save_prompt_save_button_event():
+                    self.level_editor.current_level["name"] = self.ui_manager.level_name_input_field.text
+                    self.level_editor.current_level["difficulty"] = self.ui_manager.difficulty_name_input_field.text
+
+                    print(self.level_editor.current_level)
+
+                    self.level_editor.save_levels()
+
+                    self.set_window_state(WindowState.MENU)
+
+                self.ui_manager.save_prompt_save_button.handle_event(event, save_prompt_save_button_event)
+                self.ui_manager.save_prompt_cancel_button.handle_event(event, lambda: self.set_window_state(WindowState.EDIT))
+
+                self.ui_manager.level_name_input_field.handle_event(event)
+                self.ui_manager.difficulty_name_input_field.handle_event(event)
+
+                if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                    self.set_window_state(WindowState.EDIT)
+
+            elif self.window_state == WindowState.LOAD_PROMPT:
+                pass
 
     def is_running(self) -> bool:
         return self.running
@@ -149,30 +194,3 @@ class GameManager:
 
         with open(levels_path, "r") as level:
             self.levels = json.load(level)
-
-    def poll_events(self):
-        for event in pygame.event.get():
-
-            if event.type == VIDEORESIZE:
-                self.handle_resize(event.w, event.h)
-
-            if event.type == pygame.QUIT:
-                self.game_quit()
-
-            if self.window_state == WindowState.MENU:
-                self.handle_menu_events(event)
-
-            elif self.window_state == WindowState.GAME:
-                self.handle_game_events(event)
-
-            elif self.window_state == WindowState.PAUSE:
-                self.handle_pause_events(event)
-
-            elif self.window_state == WindowState.SELECT:
-                self.handle_level_select_events(event)
-
-            elif self.window_state == WindowState.EDIT:
-                self.handle_level_editor_events(event)
-
-            elif self.window_state == WindowState.EDIT_CONFIRM:
-                self.handle_edit_confirm_events(event)
