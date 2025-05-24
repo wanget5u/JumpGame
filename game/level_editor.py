@@ -5,6 +5,7 @@ import pygame, os
 from game.floor import Floor
 from ui.button import Button
 from ui.label import Label
+from ui.slider import Slider
 from config import config
 
 from objects.block import Block
@@ -20,7 +21,7 @@ class LevelEditor:
 
         self.window = window
         self.levels = levels
-        self.current_level_index = len(levels)
+        self.current_level_index = -1
         self.current_level = self.create_empty_level()
 
         self.floor = floor
@@ -45,6 +46,8 @@ class LevelEditor:
         self.toolbar_height = config.TOOLBAR_HEIGHT
         self.name_input = ""
         self.difficulty_input = ""
+        self.slider = None
+        self.x_coordinate_label = None
 
         # [UI COLORS]
         self.toolbar_color = config.TOOLBAR_COLOR
@@ -98,6 +101,13 @@ class LevelEditor:
             920, 850, "")
         self.change_tool("select")
 
+        self.slider = Slider(
+            self.screen_width // 2, 60,
+            500, 80, 0, 2500,0)
+
+        self.x_coordinate_label = Label(
+            self.screen_width // 2, 125, "")
+
     def save_levels(self):
         BASE_DIR = os.path.dirname(os.path.abspath(__file__))
         PROJECT_DIR = os.path.abspath(os.path.join(BASE_DIR, ".."))
@@ -129,6 +139,7 @@ class LevelEditor:
         print(f"Wczytano poziom {self.name_input}.")
 
     def create_empty_level(self) -> list:
+        self.current_level_index = len(self.levels)
         return \
             {
             "index": str(len(self.levels) + 1),
@@ -196,13 +207,16 @@ class LevelEditor:
         grid_surface = pygame.Surface((screen_width, screen_height), pygame.SRCALPHA)
 
         for x in range(start_x, screen_width, self.grid_size):
-            line_color = self.grid_color
-            if x == config.LEVEL_BEGIN_X:
-                line_color = config.GRID_START_LINE_COLOR
-            pygame.draw.line(grid_surface, line_color, (x, 0), (x, screen_height - self.toolbar_height))
+            pygame.draw.line(grid_surface, self.grid_color, (x, 0), (x, screen_height - self.toolbar_height))
 
         for y in range(start_y, screen_height - self.toolbar_height, self.grid_size):
             pygame.draw.line(grid_surface, self.grid_color, (0, y), (screen_width, y))
+
+        start_world_x = self.grid_size * 2
+        screen_x = start_world_x + self.camera_offset_x
+
+        if 0 <= screen_x < screen_width:
+            pygame.draw.line(grid_surface, config.GRID_START_LINE_COLOR, (screen_x, 0), (screen_x, screen_height - self.toolbar_height), 2)
 
         self.window.blit(grid_surface, (0, 0))
 
@@ -299,9 +313,16 @@ class LevelEditor:
         self.load_button.handle_event(event, load_button_event)
         self.exit_button.handle_event(event, exit_button_event)
 
+        self.slider.handle_event(event)
+        self.camera_offset_x = -round(self.slider.value)
+        self.x_coordinate_label.set_text(str(round(self.slider.value)))
+
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             mouse_pos = pygame.mouse.get_pos()
             world_pos = self.screen_to_world(mouse_pos)
+
+            if self.slider.outer_rect.collidepoint(mouse_pos):
+                return
 
             match self.selected_tool:
                 case "select":
@@ -323,6 +344,9 @@ class LevelEditor:
 
         self.floor.draw(self.window)
         self.selected_tool_label.draw(self.window)
+
+        self.slider.draw(self.window)
+        self.x_coordinate_label.draw(self.window)
 
         for name, button in self.buttons.items():
             button.draw(self.window)

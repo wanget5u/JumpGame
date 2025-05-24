@@ -22,6 +22,7 @@ class GameManager:
         self.floor = None
         self.player = None
         self.levels = {}
+        self.current_level = None
 
         # [MANAGERS]
         self.ui_manager = None
@@ -54,6 +55,16 @@ class GameManager:
 
         self.poll_events()
 
+    def level_start(self):
+        # for level in self.levels:
+        #     if int(level["index"]) == self.ui_manager.current_page_select:
+        #         print(level)
+
+        self.set_window_state(WindowState.GAME)
+
+    def select_level(self, level):
+        self.current_level = level
+
     def poll_events(self):
         for event in pygame.event.get():
 
@@ -65,7 +76,12 @@ class GameManager:
 
             if self.window_state == WindowState.MENU:
                 self.ui_manager.start_button.handle_event(event, lambda: self.set_window_state(WindowState.SELECT))
-                self.ui_manager.level_editor_button.handle_event(event, lambda: self.set_window_state(WindowState.EDIT))
+
+                def level_editor_button_event():
+                    self.level_editor.current_level = self.level_editor.create_empty_level()
+                    self.set_window_state(WindowState.EDIT)
+
+                self.ui_manager.level_editor_button.handle_event(event, level_editor_button_event)
                 self.ui_manager.exit_button.handle_event(event, lambda: self.game_quit())
 
                 if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
@@ -89,7 +105,7 @@ class GameManager:
                     self.set_window_state(WindowState.GAME)
 
             elif self.window_state == WindowState.SELECT:
-                self.ui_manager.level_button.handle_event(event, lambda: self.set_window_state(WindowState.GAME))
+                self.ui_manager.level_button.handle_event(event, self.level_start)
 
                 if event.type == pygame.KEYDOWN and event.key == pygame.K_LEFT:
                     self.ui_manager.change_level_select_page("left")
@@ -137,9 +153,9 @@ class GameManager:
                     self.level_editor.current_level["name"] = self.ui_manager.level_name_input_field.text
                     self.level_editor.current_level["difficulty"] = self.ui_manager.difficulty_name_input_field.text
 
-                    print(self.level_editor.current_level)
-
                     self.level_editor.save_levels()
+
+                    self.ui_manager.create_level_load_buttons()
 
                     self.set_window_state(WindowState.MENU)
 
@@ -153,7 +169,30 @@ class GameManager:
                     self.set_window_state(WindowState.EDIT)
 
             elif self.window_state == WindowState.LOAD_PROMPT:
-                pass
+                self.ui_manager.load_prompt_back_button.handle_event(event, lambda: self.set_window_state(WindowState.EDIT))
+
+                self.ui_manager.filter_easy_checkbox.handle_event(event, lambda: self.ui_manager.create_level_load_buttons())
+                self.ui_manager.filter_normal_checkbox.handle_event(event, lambda: self.ui_manager.create_level_load_buttons())
+                self.ui_manager.filter_hard_checkbox.handle_event(event, lambda: self.ui_manager.create_level_load_buttons())
+
+                self.ui_manager.list_left_load_prompt_button.handle_event(event, lambda: self.ui_manager.change_level_load_page("left"))
+                self.ui_manager.list_right_load_prompt_button.handle_event(event, lambda: self.ui_manager.change_level_load_page("right"))
+
+                def load_button_event(level):
+                    self.level_editor.load_level(int(level["index"]))
+                    self.set_window_state(WindowState.EDIT)
+
+                for button, level in self.ui_manager.level_info_buttons:
+                    button.handle_event(event, lambda l=level: load_button_event(l))
+
+                if event.type == pygame.KEYDOWN and event.key == pygame.K_LEFT:
+                    self.ui_manager.change_level_load_page("left")
+
+                if event.type == pygame.KEYDOWN and event.key == pygame.K_RIGHT:
+                    self.ui_manager.change_level_load_page("right")
+
+                if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                    self.set_window_state(WindowState.EDIT)
 
     def is_running(self) -> bool:
         return self.running

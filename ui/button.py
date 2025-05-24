@@ -9,7 +9,8 @@ class Button:
                  text: str,
                  color: tuple[int, int, int] = config.BUTTON_COLOR,
                  text_color: tuple[int, int, int] = config.TEXT_COLOR,
-                 text_size: int = config.FONT_SIZE):
+                 text_size: int = config.FONT_SIZE,
+                 description_text: str = ""):
 
         assert isinstance(x, int) and isinstance(y, int), "x i y muszą być liczbami całkowitymi"
         assert isinstance(width, int) and width > 0, "width musi być dodatnią liczbą całkowitą"
@@ -18,6 +19,7 @@ class Button:
         assert isinstance(color, tuple) and len(color) == 3 and all(isinstance(c, int) and 0 <= c <= 255 for c in color), "color musi być krotką 3 liczb całkowitych z zakresu 0-255"
         assert isinstance(text_color, tuple) and len(text_color) == 3 and all(isinstance(c, int) and 0 <= c <= 255 for c in text_color), "text_color musi być krotką 3 liczb całkowitych z zakresu 0-255"
         assert isinstance(text_size, int) and text_size > 0, "text_size musi być nieujemną liczbą całkowitą"
+        assert isinstance(description_text, str), "description musi być stringiem"
 
         self.x = x
         self.y = y
@@ -29,15 +31,23 @@ class Button:
 
         self.text = text
         self.color = color
-        self.color_hover = tuple(min(255, int(c * 1.2)) for c in color)  # Kolor przy najechaniu kursorem
-        self.color_click = tuple(min(255, int(c * 1.4)) for c in color)  # Kolor przy kliknięciu
+        self.color_hover = tuple(min(255, int(c * 1.2)) for c in color)
+        self.color_click = tuple(min(255, int(c * 1.4)) for c in color)
         self.text_color = text_color
         self.text_size = text_size
-        self.font = pygame.font.SysFont(None, int(text_size))
+        self.description_text = description_text
+
+        self.font = None
+        self.scaled_text_size = None
+        self.scaled_description_size = None
+
+        self.scaled_x = x
+        self.scaled_y = y
+        self.scaled_width = width
+        self.scaled_height = height
 
         self.is_pressed = False
 
-    """Rysowanie przycisku na ekranie."""
     def draw(self, screen: pygame.Surface):
         assert isinstance(screen, pygame.Surface), "screen musi być instancją pygame.Surface"
 
@@ -51,30 +61,42 @@ class Button:
             current_color = self.color
 
         pygame.draw.rect(screen, current_color, self.rect, border_radius=4)
+
         text_surface = self.font.render(self.text, True, self.text_color)
         text_rect = text_surface.get_rect(center=self.rect.center)
         screen.blit(text_surface, text_rect)
 
-    """Aktualizacja wielkości guzika względem dynamicznie zmieniającej się rozdzielczości okna."""
+        if self.description_text != "":
+            description_font = pygame.font.SysFont(None, self.scaled_description_size)
+            description_surface = description_font.render(self.description_text, True, self.text_color)
+
+            dx = self.scaled_width // 2.5 if self.description_text == "normal" else self.scaled_width // 2.4
+            dy = self.scaled_height // 2.3
+
+            description_rect = description_surface.get_rect(center=(self.scaled_x - dx, self.scaled_y + dy))
+            screen.blit(description_surface, description_rect)
+
     def update_size(self, screen: pygame.Surface):
         assert isinstance(screen, pygame.Surface), "screen musi być instancją pygame.Surface"
 
         screen_width, screen_height = screen.get_size()
 
-        rect_width = int(screen_width * (self.width / config.SCREEN_WIDTH))
-        rect_height = int(screen_height * (self.height / config.SCREEN_HEIGHT))
-        rect_x = int(screen_width * (self.x / config.SCREEN_WIDTH))
-        rect_y = int(screen_height * (self.y / config.SCREEN_HEIGHT))
+        self.scaled_width = int(screen_width * (self.width / config.SCREEN_WIDTH))
+        self.scaled_height = int(screen_height * (self.height / config.SCREEN_HEIGHT))
+        self.scaled_x = int(screen_width * (self.x / config.SCREEN_WIDTH))
+        self.scaled_y = int(screen_height * (self.y / config.SCREEN_HEIGHT))
 
-        self.rect = pygame.Rect(0, 0, rect_width, rect_height)
-        self.rect.center = (rect_x, rect_y)
-        self.font = pygame.font.SysFont(None, int(self.text_size))
+        self.rect = pygame.Rect(0, 0, self.scaled_width, self.scaled_height)
+        self.rect.center = (self.scaled_x, self.scaled_y)
 
-    """Sprawdzanie, czy kursor znajduje się nad przyciskiem."""
+        self.scaled_text_size = int(screen_height * (self.text_size / config.SCREEN_HEIGHT))
+        self.scaled_description_size = int(self.scaled_text_size * 0.5)
+
+        self.font = pygame.font.SysFont(None, self.scaled_text_size)
+
     def is_hovered(self):
         return self.rect.collidepoint(pygame.mouse.get_pos())
 
-    """Obsługa zdarzeń myszy dla przycisku."""
     def handle_event(self, event, on_click_event: callable):
         assert callable(on_click_event), "on_click_event musi być callable"
 
