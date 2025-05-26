@@ -57,7 +57,10 @@ class GameManager:
             if keys[pygame.K_UP] or mouse_buttons[0]:
                 self.engine.player_jump(self.player)
 
-            self.engine.update_player(self.player, delta_time, self.ui_manager.window)
+            game_over = self.engine.update_player(self.player, delta_time, self.ui_manager.window)
+
+            if game_over:
+                self.engine.reset_player(self.player)
 
         self.poll_events()
 
@@ -199,10 +202,7 @@ class GameManager:
         self.running = False
 
     def render(self):
-        self.ui_manager.render(self.window_state, self.player, self.floor, self.level_editor)
-
-        if self.window_state == WindowState.GAME:
-            self.engine.draw_objects(self.ui_manager.window)
+        self.ui_manager.render(self.window_state, self.player, self.floor, self.level_editor, self.engine)
 
     def set_window_state(self, window_state: WindowState):
         assert isinstance(window_state, WindowState), "window_state musi być instancją WindowState"

@@ -26,47 +26,86 @@ class Engine:
         self.objects = []
         self.camera_offset_x = 0
 
-    def _check_player_coherence(self, player: Player) -> bool:
-        assert isinstance(player, Player), "player musi być instancją klasy Player"
-        return player.outer_rect.bottom <= self.floor.floor_y
+    def check_block_collision_top(self, player: Player, new_y: float):
+        player_bottom = new_y + config.PLAYER_OUTER_SIZE // 2
+        player_left = player.x - config.PLAYER_OUTER_SIZE // 2
+        player_right = player.x + config.PLAYER_OUTER_SIZE // 2
 
-    """ Sprawdza kolizję gracza z przeszkodą """
-    def check_player_collision_with_object(self, player: Player, obstacle_rect: pygame.Rect) -> bool:
-        assert isinstance(player, Player), "player musi być instancją klasy Player"
-        assert isinstance(obstacle_rect, pygame.Rect), "obstacle_rect musi być instancją pygame.Rect"
-        return player.outer_rect.colliderect(obstacle_rect)
+        highest_block_top = None
+        tolerance = 10
+
+        for obj in self.objects:
+            if obj.__class__.__name__ == 'Block':
+                block_size = config.BLOCK_OUTER_SIZE
+                block_left = obj.x - block_size // 2
+                block_right = obj.x + block_size // 2
+                block_top = obj.y - block_size // 2
+                block_bottom = obj.y + block_size // 2
+
+                if player_right > block_left and player_left < block_right:
+                    if player.velocity_y >= 0 and block_top - tolerance <= player_bottom <= block_bottom:
+                        if highest_block_top is None or block_top < highest_block_top:
+                            highest_block_top = block_top
+
+        return highest_block_top
+
+    def check_block_collision_horizontal(self, player: Player, new_x: float):
+        player_left = new_x - config.PLAYER_OUTER_SIZE // 2
+        player_right = new_x + config.PLAYER_OUTER_SIZE // 2
+        player_top = player.y - config.PLAYER_OUTER_SIZE // 2
+        player_bottom = player.y + config.PLAYER_OUTER_SIZE // 2
+
+        for obj in self.objects:
+            if obj.__class__.__name__ == 'Block':
+                block_size = config.BLOCK_OUTER_SIZE
+                block_left = obj.x - block_size // 2
+                block_right = obj.x + block_size // 2
+                block_top = obj.y - block_size // 2
+                block_bottom = obj.y + block_size // 2
+
+                if player_right >= block_left and player_left <= block_right and player_bottom >= block_top and player_top <= block_bottom:
+                    return True
+
+        return False
 
     def check_player_collision_with_objects(self, player: Player, screen: pygame.Surface):
         assert isinstance(player, Player), "player musi być instancją klasy Player"
         assert isinstance(screen, pygame.Surface), "screen musi być instancją pygame.Surface"
 
-        deadly_collision = False
-        collision_detected = False
-        interactive_collisions = []
+        if self.check_block_collision_horizontal(player, screen):
+            return True
 
         for obj in self.objects:
-            obj.update_size(screen)
+            obj_type = obj.__class__.__name__
 
-            if hasattr(obj, 'get_collision_rect'):
-                collision_rect = obj.get_collision_rect()
-                collision_detected = player.outer_rect.colliderect(collision_rect)
+            if obj_type == 'Block':
+                continue
 
-                if collision_detected and obj.__class__.__name__ == 'Spike':
-                    if hasattr(obj, 'get_collision_points'):
-                        collision_detected = self.point_in_polygon_collision(player.outer_rect, obj.get_collision_points())
+            if obj_type == 'Spike':
+                spike_size = config.GRID_SIZE
+                spike_rect = pygame.Rect(
+                    obj.x - spike_size / 2,
+                    obj.y - spike_size / 2,
+                    spike_size,
+                    spike_size)
 
-            if collision_detected:
-                obj_type = obj.__class__.__name__
+                player_world_rect = pygame.Rect(
+                    player.x - player.outer_rect.width / 2,
+                    player.y - player.outer_rect.height / 2,
+                    player.outer_rect.width,
+                    player.outer_rect.height)
 
-                if obj_type in ['Block', 'Spike']:
-                    deadly_collision = True
-                elif obj_type in ['JumpPad', 'JumpOrb']:
-                    interactive_collisions.append(obj)
+                if player_world_rect.colliderect(spike_rect):
+                    return True
 
-        for obj in interactive_collisions:
-            self.player_jump(player)
+        return False
 
-        return deadly_collision
+    """ Sprawdza kolizję gracza z przeszkodą """
+    @staticmethod
+    def check_player_collision_with_object(player: Player, obstacle_rect: pygame.Rect) -> bool:
+        assert isinstance(player, Player), "player musi być instancją klasy Player"
+        assert isinstance(obstacle_rect, pygame.Rect), "obstacle_rect musi być instancją pygame.Rect"
+        return player.outer_rect.colliderect(obstacle_rect)
 
     def point_in_polygon_collision(self, outer_rect: pygame.Rect, polygon_points: list):
         assert isinstance(outer_rect, pygame.Rect), "outer_rect musi być obiektem pygame.Rect"
@@ -89,7 +128,8 @@ class Engine:
 
         return False
 
-    def point_in_polygon(self, point: tuple, polygon_points: list):
+    @staticmethod
+    def point_in_polygon(point: tuple, polygon_points: list):
         assert isinstance(point, tuple) and all(isinstance(x, int) for x in point), "point musi być krotką 2 dodatnich liczb całkowitych"
         assert isinstance(polygon_points, list), "polygon_points musi być listą"
 
@@ -99,6 +139,7 @@ class Engine:
 
     """ Aktualizuje pozycję gracza na podstawie prędkości, grawitacji i czasu (delta_time):
     Dodaje grawitację, przesuwa gracza, obsługuje wykrycie kolizji z podłożem (floor_y) """
+
     def update_player(self, player: Player, delta_time: float, screen: pygame.Surface):
         assert isinstance(player, Player), "player musi być instancją klasy Player"
         assert isinstance(delta_time, float) and delta_time > 0, "delta_time musi być dodatnią liczbą zmiennoprzecinkową"
@@ -106,22 +147,46 @@ class Engine:
 
         self.apply_gravity(player, delta_time)
 
-        player.y += player.velocity_y * delta_time
+        new_x = player.x + config.PLAYER_SPEED * delta_time
 
-        floor_y_screen = self.floor.get_screen_floor_y(screen)
+        if not self.check_block_collision_horizontal(player, new_x):
+            player.x = new_x
 
-        ground_y = floor_y_screen - player.outer_rect.height / 2
+        new_y = player.y + player.velocity_y * delta_time
 
-        player.update_size(screen, self.floor)
+        block_top = self.check_block_collision_top(player, new_y)
 
-        self.camera_offset_x -= config.PLAYER_SPEED
+        floor_y_world = self.floor.floor_y
+        ground_y = floor_y_world - config.PLAYER_OUTER_SIZE / 2
 
-        if self.check_player_collision_with_floor(player, screen):
-            player.y = ground_y
-            player.velocity_y = 0
-            player.on_ground = True
+        landing_y = ground_y
+        if block_top is not None and player.velocity_y >= 0:
+            block_landing_y = block_top
+            player_bottom = new_y + config.PLAYER_OUTER_SIZE // 2
+
+            if player_bottom <= block_landing_y:
+                if block_landing_y < ground_y:
+                    landing_y = block_landing_y
+
+        tolerance = 10
+
+        if player.velocity_y >= 0:
+            if new_y + config.PLAYER_OUTER_SIZE // 2 >= landing_y - tolerance:
+                player.y = landing_y
+                player.velocity_y = 0
+                player.on_ground = True
+            else:
+                player.y = new_y
+                player.on_ground = False
         else:
+            player.y = new_y
             player.on_ground = False
+
+        if player.x >= config.SCREEN_WIDTH // 6:
+            target_camera_x = -(player.x - config.SCREEN_WIDTH // 6)
+            self.camera_offset_x = int(target_camera_x)
+
+        player.update_size(screen, self.floor, self.camera_offset_x)
 
     """ Powoduje skok gracza: nadaje prędkość w górę, sprawdza, czy gracz jest na ziemi, zanim pozwoli na skok """
     def player_jump(self, player: Player):
@@ -158,11 +223,12 @@ class Engine:
     def reset_player(self, player: Player):
         assert isinstance(player, Player), "player musi być instancją klasy Player"
 
-        player.x = 100
-        player.y = self.floor.floor_y
+        player.x = 90
+        player.y = self.floor.floor_y - 10
         player.velocity_y = 0
         player.rotation = 0
         player.on_ground = True
+        self.camera_offset_x = 0
 
     def apply_gravity(self, player: Player, delta_time: float):
         assert isinstance(player, Player), "player musi być instancją klasy Player"
@@ -189,17 +255,21 @@ class Engine:
         assert isinstance(screen, pygame.Surface), "screen musi być instancją pygame.Surface"
 
         for obj in self.objects:
-            obj_type = obj.__class__.__name__
-            screen_pos = self.world_to_screen((obj.x, obj.y))
+            screen_x = obj.x + self.camera_offset_x
+            screen_y = obj.y
 
-            if obj_type == 'Block':
-                block = Block(screen_pos[0], screen_pos[1])
-                block.draw(screen)
-            elif obj_type == 'Spike':
-                spike = Spike(
-                    screen_pos[0] + config.GRID_SIZE // 2,
-                    screen_pos[1] + config.GRID_SIZE)
-                spike.draw(screen)
+            if -100 < screen_x < config.SCREEN_WIDTH + 100:
+                obj_type = obj.__class__.__name__
+
+                if obj_type == 'Block':
+                    temp_block = Block(screen_x, screen_y)
+                    temp_block.update_size(screen)
+                    temp_block.draw(screen)
+
+                elif obj_type == 'Spike':
+                    temp_spike = Spike(screen_x, screen_y)
+                    temp_spike.update_size(screen)
+                    temp_spike.draw(screen)
 
     def world_to_screen(self, world_pos: tuple):
         assert isinstance(world_pos, tuple) and all(isinstance(x, int) for x in world_pos), "world_pos musi być krotką 2 liczb całkowitych"

@@ -243,15 +243,15 @@ class LevelEditor:
                 )
                 pygame.draw.rect(self.window, highlight_color, rect, 2)
             else:
-                pygame.draw.circle(self.window, highlight_color, (screen_pos[0] + self.grid_size // 2, screen_pos[1] + self.grid_size // 2), self.grid_size // 2, 2)
+                pygame.draw.circle(self.window, highlight_color, (screen_pos[0], screen_pos[1]), self.grid_size // 2, 2)
 
         if obj_type == "block":
             block = Block(screen_pos[0], screen_pos[1])
             block.draw(self.window)
         elif obj_type == "spike":
             spike = Spike(
-                screen_pos[0] + self.grid_size // 2,
-                screen_pos[1] + self.grid_size)
+                screen_pos[0],
+                screen_pos[1])
             spike.draw(self.window)
 
     def add_object(self, obj_type: str, position):
@@ -265,7 +265,11 @@ class LevelEditor:
         x = (world_pos[0] // self.grid_size) * self.grid_size
         y = (world_pos[1] // self.grid_size) * self.grid_size
 
-        if obj_type == "block":
+        if obj_type == 'block':
+            x += self.grid_size // 2
+            y += self.grid_size // 2
+
+        if obj_type == 'spike':
             x += self.grid_size // 2
             y += self.grid_size // 2
 
@@ -288,12 +292,16 @@ class LevelEditor:
             obj_x = obj["x"]
             obj_y = obj["y"]
 
+            print(grid_x, grid_y)
+
             if obj["type"] == "block":
                 obj_grid_x = obj_x // self.grid_size
                 obj_grid_y = obj_y // self.grid_size
             else:
                 obj_grid_x = obj_x // self.grid_size
                 obj_grid_y = obj_y // self.grid_size
+
+            print(obj_grid_x, obj_grid_y)
 
             if obj_grid_x == grid_x and obj_grid_y == grid_y:
                 del self.current_level["layout"][index]

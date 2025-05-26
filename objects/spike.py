@@ -43,18 +43,18 @@ class Spike:
         outer_height = int(self.outer_height * scale_y)
 
         self.outer_points = [
-            (x, y - outer_height),
-            (x - outer_width // 2, y),
-            (x + outer_width // 2, y)
+            (x, y - outer_height // 2),
+            (x - outer_width // 2, y + outer_height // 2),
+            (x + outer_width // 2, y + outer_height // 2)
         ]
 
         inner_width = int(self.inner_width * scale_x)
         inner_height = int(self.inner_height * scale_y)
 
         self.inner_points = [
-            (x, y - inner_height),
-            (x - inner_width // 2, y - 2),
-            (x + inner_width // 2, y - 2)
+            (x, y - inner_height // 2 + 2),
+            (x + 2 - inner_width // 2, y + inner_height // 2),
+            (x - 2 + inner_width // 2, y + inner_height // 2)
         ]
 
     def get_collision_rect(self):
