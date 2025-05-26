@@ -51,19 +51,23 @@ class GameManager:
         assert isinstance(delta_time, float) and delta_time > 0, "delta_time musi być dodatnią liczbą zmiennoprzecinkową"
 
         if self.window_state == WindowState.GAME:
+            keys = pygame.key.get_pressed()
+            mouse_buttons = pygame.mouse.get_pressed()
+
+            if keys[pygame.K_UP] or mouse_buttons[0]:
+                self.engine.player_jump(self.player)
+
             self.engine.update_player(self.player, delta_time, self.ui_manager.window)
 
         self.poll_events()
 
     def level_start(self):
-        # for level in self.levels:
-        #     if int(level["index"]) == self.ui_manager.current_page_select:
-        #         print(level)
+        self.current_level = self.ui_manager.current_level
+        self.engine.reset_player(self.player)
+
+        self.engine.set_objects_from_layout(self.current_level["layout"])
 
         self.set_window_state(WindowState.GAME)
-
-    def select_level(self, level):
-        self.current_level = level
 
     def poll_events(self):
         for event in pygame.event.get():
@@ -88,12 +92,6 @@ class GameManager:
                     self.game_quit()
 
             elif self.window_state == WindowState.GAME:
-                keys = pygame.key.get_pressed()
-                mouse_buttons = pygame.mouse.get_pressed()
-
-                if keys[pygame.K_UP] or mouse_buttons[0]:
-                    self.engine.player_jump(self.player)
-
                 if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
                     self.set_window_state(WindowState.PAUSE)
 
@@ -202,6 +200,9 @@ class GameManager:
 
     def render(self):
         self.ui_manager.render(self.window_state, self.player, self.floor, self.level_editor)
+
+        if self.window_state == WindowState.GAME:
+            self.engine.draw_objects(self.ui_manager.window)
 
     def set_window_state(self, window_state: WindowState):
         assert isinstance(window_state, WindowState), "window_state musi być instancją WindowState"

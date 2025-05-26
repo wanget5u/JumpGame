@@ -35,6 +35,7 @@ class UIManager:
         self.floor_y_label = None
 
         # [SELECT]
+        self.current_level = None
         self.current_page_select = 1
         self.select_title_label = None
         self.select_page_label = None
@@ -285,11 +286,11 @@ class UIManager:
                 self.load_page_label.set_text(f"Page {self.current_page_load}")
 
     def create_level_button(self):
-        current_level = None
+        self.current_level = None
 
         for level in self.levels:
             if int(level["index"]) == int(self.current_page_select):
-                current_level = level
+                self.current_level = level
 
         screen_width, screen_height = self.window.get_size()
 
@@ -298,8 +299,8 @@ class UIManager:
 
         self.level_button = Button(
             self.screen_width // 2, self.screen_height // 2,
-            int(button_width * 0.7), int(button_height * 0.7), current_level["name"],
-            config.BUTTON_COLOR, config.TEXT_COLOR, 128, current_level["difficulty"])
+            int(button_width * 0.7), int(button_height * 0.7), self.current_level["name"],
+            config.BUTTON_COLOR, config.TEXT_COLOR, 128, self.current_level["difficulty"])
 
     def change_level_select_page(self, direction):
         if direction == "left":

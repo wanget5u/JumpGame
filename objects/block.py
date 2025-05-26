@@ -43,3 +43,6 @@ class Block:
 
         self.inner_rect = pygame.Rect(0, 0, rect_inner_size, rect_inner_size)
         self.inner_rect.center = (rect_x, rect_y)
+
+    def get_collision_rect(self):
+        return self.outer_rect
