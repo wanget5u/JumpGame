@@ -93,8 +93,7 @@ class UIManager:
         self.screen_width = config.SCREEN_WIDTH
         self.screen_height = config.SCREEN_HEIGHT
 
-    def init(self, levels: list):
-        assert isinstance(levels, list), "levels musi być listą"
+    def init(self, levels):
 
         self.levels = levels
 
@@ -349,6 +348,26 @@ class UIManager:
                 self.create_level_button()
                 self.select_page_label.set_text(f"Page {self.current_page_select}")
 
+    def game_components_render(self, player: Player, floor: Floor, level_editor: LevelEditor, engine: Engine):
+        assert isinstance(player, Player), "player musi być instancją klasy Player"
+        assert isinstance(floor, Floor), "floor musi być instancją klasy Floor"
+        assert isinstance(level_editor, LevelEditor), "level_editor musi być instancją klasy LevelEditor"
+
+        engine.draw_objects(self.window)
+        player.draw(self.window, floor, engine.camera_offset_x)
+        floor.draw(self.window)
+
+        for component in self.game_components:
+            component.draw(self.window)
+
+        self.coordinate_x_label.set_text(f"x={player.x:.2f}")
+        self.coordinate_y_label.set_text(f"y={player.y:.2f}")
+        self.floor_y_label.set_text(f"x={floor.floor_y}")
+
+        engine.attempt_counter_label.x = engine.camera_offset_x + 400
+        engine.attempt_counter_label.set_text(f"Attempt {engine.attempts}")
+        engine.attempt_counter_label.draw(self.window)
+
     def render(self, window_state: WindowState, player: Player, floor: Floor, level_editor: LevelEditor, engine: Engine):
         assert isinstance(window_state, WindowState), "window_state musi być obiektem instancji WindowState"
         assert isinstance(player, Player), "player musi być instancją klasy Player"
@@ -364,23 +383,12 @@ class UIManager:
         if window_state == WindowState.GAME:
             self.window.fill(tuple(int(c * 0.8) for c in config.BACKGROUND_COLOR))
 
-            self.coordinate_x_label.set_text(f"x={player.x:.2f}")
-            self.coordinate_y_label.set_text(f"y={player.y:.2f}")
-            self.floor_y_label.set_text(f"x={floor.floor_y}")
-
-            for component in self.game_components:
-                component.draw(self.window)
-
-            engine.draw_objects(self.window)
-            player.draw(self.window, floor, engine.camera_offset_x)
-            floor.draw(self.window)
+            self.game_components_render(player, floor, level_editor, engine)
 
         if window_state == WindowState.PAUSE:
             self.window.fill(tuple(int(c * 0.8) for c in config.BACKGROUND_COLOR))
 
-            engine.draw_objects(self.window)
-            player.draw(self.window, floor, engine.camera_offset_x)
-            floor.draw(self.window)
+            self.game_components_render(player, floor, level_editor, engine)
 
             transparent_surface = pygame.Surface(self.window.get_size(), pygame.SRCALPHA)
             transparent_surface.fill(config.BACKGROUND_PAUSE_COLOR)

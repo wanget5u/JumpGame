@@ -14,9 +14,8 @@ from objects.spike import Spike
 # from objects.jump_orb import
 
 class LevelEditor:
-    def __init__(self, window: pygame.Surface, levels: list, floor: Floor):
+    def __init__(self, window: pygame.Surface, levels, floor: Floor):
         assert isinstance(window, pygame.Surface), "screen musi być instancją pygame.Surface"
-        assert isinstance(levels, list), "list musi być listą"
         assert isinstance(floor, Floor), "floor musi być instancją klasy Floor"
 
         self.window = window

@@ -60,6 +60,7 @@ class GameManager:
             game_over = self.engine.update_player(self.player, delta_time, self.ui_manager.window)
 
             if game_over:
+                self.engine.attempts +=1
                 self.engine.reset_player(self.player)
 
         self.poll_events()
@@ -69,6 +70,7 @@ class GameManager:
         self.engine.reset_player(self.player)
 
         self.engine.set_objects_from_layout(self.current_level["layout"])
+        self.engine.attempts = 1
 
         self.set_window_state(WindowState.GAME)
 
@@ -179,8 +181,8 @@ class GameManager:
                 self.ui_manager.list_left_load_prompt_button.handle_event(event, lambda: self.ui_manager.change_level_load_page("left"))
                 self.ui_manager.list_right_load_prompt_button.handle_event(event, lambda: self.ui_manager.change_level_load_page("right"))
 
-                def load_button_event(level):
-                    self.level_editor.load_level(int(level["index"]))
+                def load_button_event(l):
+                    self.level_editor.load_level(int(l["index"]))
                     self.set_window_state(WindowState.EDIT)
 
                 for button, level in self.ui_manager.level_info_buttons:

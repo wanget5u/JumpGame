@@ -9,6 +9,8 @@ from objects.spike import Spike
 from objects.jump_pad import JumpPad
 from objects.jump_orb import JumpOrb
 
+from ui.label import Label
+
 from shapely.geometry import Point
 from shapely.geometry.polygon import Polygon
 
@@ -23,40 +25,12 @@ class Engine:
         self.original_screen_height = config.SCREEN_HEIGHT
         self.original_screen_width = config.SCREEN_WIDTH
 
+        self.attempts = 1
+        self.attempt_counter_label = Label(
+            400, 400, "", 128)
+
         self.objects = []
         self.camera_offset_x = 0
-
-    def check_player_collision_with_objects(self, player: Player, screen: pygame.Surface):
-        assert isinstance(player, Player), "player musi być instancją klasy Player"
-        assert isinstance(screen, pygame.Surface), "screen musi być instancją pygame.Surface"
-
-        if self.check_block_collision_sides(player, screen):
-            return True
-
-        for obj in self.objects:
-            obj_type = obj.__class__.__name__
-
-            if obj_type == 'Block':
-                continue
-
-            if obj_type == 'Spike':
-                spike_size = config.GRID_SIZE
-                spike_rect = pygame.Rect(
-                    obj.x - spike_size / 2,
-                    obj.y - spike_size / 2,
-                    spike_size,
-                    spike_size)
-
-                player_world_rect = pygame.Rect(
-                    player.x - player.outer_rect.width / 2,
-                    player.y - player.outer_rect.height / 2,
-                    player.outer_rect.width,
-                    player.outer_rect.height)
-
-                if player_world_rect.colliderect(spike_rect):
-                    return True
-
-        return False
 
     """ Sprawdza kolizję gracza z przeszkodą """
     @staticmethod
@@ -117,7 +91,7 @@ class Engine:
 
         return highest_block_top
 
-    def check_block_collision_sides(self, player: Player, new_x: float):
+    def check_block_collision_left_bottom(self, player: Player, new_x: float):
         player_left = new_x - config.PLAYER_OUTER_SIZE // 2
         player_right = new_x + config.PLAYER_OUTER_SIZE // 2
         player_top = player.y - config.PLAYER_OUTER_SIZE // 2
@@ -125,13 +99,12 @@ class Engine:
 
         for obj in self.objects:
             if obj.__class__.__name__ == 'Block':
-                block_size = config.BLOCK_OUTER_SIZE
-                block_left = obj.x - block_size // 2
-                block_right = obj.x + block_size // 2
-                block_top = obj.y - block_size // 2
-                block_bottom = obj.y + block_size // 2
+                block_left = obj.x - config.BLOCK_OUTER_SIZE // 2
+                block_right = obj.x + config.BLOCK_OUTER_SIZE // 2
+                block_top = obj.y - config.BLOCK_OUTER_SIZE // 2
+                block_bottom = obj.y + config.BLOCK_OUTER_SIZE // 2
 
-                if player_right >= block_left and player_left <= block_right and player_bottom >= block_top and player_top <= block_bottom:
+                if player_right > block_left and player_left < block_right and player_bottom > block_top and player_top < block_bottom:
                     return True
 
         return False
@@ -144,13 +117,6 @@ class Engine:
         assert isinstance(screen, pygame.Surface), "screen musi być instancją pygame.Surface"
 
         self.apply_gravity(player, delta_time)
-
-        new_x = player.x + config.PLAYER_SPEED * delta_time
-
-        # if self.check_block_collision_sides(player, new_x):
-        #     return True
-
-        player.x = new_x
 
         new_y = player.y + player.velocity_y * delta_time
 
@@ -181,6 +147,12 @@ class Engine:
         player.on_ground = on_ground
 
         print(f"player_y = {player.y}, landing_y = {landing_y}, block_top = {block_top}, player_bottom = {new_y + config.PLAYER_OUTER_SIZE // 2} on_ground = {player.on_ground}, velocity = {player.velocity_y}")
+
+        new_x = player.x + config.PLAYER_SPEED * delta_time
+        if not self.check_block_collision_left_bottom(player, new_x):
+            player.x = new_x
+        else:
+            return True
 
         if player.x >= config.SCREEN_WIDTH // 6:
             target_camera_x = -(player.x - config.SCREEN_WIDTH // 6)

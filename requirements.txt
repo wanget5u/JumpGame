@@ -1,7 +1,5 @@
-pygame==2.61
+pygame==2.6
 
 pytest==8.3.5
-
-pygbag==2.2.15
 
 shapely==2.1.1
