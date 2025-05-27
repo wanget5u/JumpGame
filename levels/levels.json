@@ -336,5 +336,57 @@
         "y": 690
       }
     ]
+  },
+  {
+    "index": "3",
+    "name": "3spike",
+    "difficulty": "easy",
+    "layout": [
+      {
+        "type": "spike",
+        "x": 450,
+        "y": 690
+      },
+      {
+        "type": "spike",
+        "x": 510,
+        "y": 690
+      },
+      {
+        "type": "spike",
+        "x": 570,
+        "y": 690
+      },
+      {
+        "type": "spike",
+        "x": 930,
+        "y": 690
+      },
+      {
+        "type": "spike",
+        "x": 990,
+        "y": 690
+      },
+      {
+        "type": "spike",
+        "x": 1050,
+        "y": 690
+      },
+      {
+        "type": "spike",
+        "x": 1410,
+        "y": 690
+      },
+      {
+        "type": "spike",
+        "x": 1470,
+        "y": 690
+      },
+      {
+        "type": "spike",
+        "x": 1530,
+        "y": 690
+      }
+    ]
   }
 ]

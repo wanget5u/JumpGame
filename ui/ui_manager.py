@@ -365,7 +365,7 @@ class UIManager:
             self.window.fill(tuple(int(c * 0.8) for c in config.BACKGROUND_COLOR))
 
             self.coordinate_x_label.set_text(f"x={player.x:.2f}")
-            self.coordinate_y_label.set_text(f"x={player.y:.2f}")
+            self.coordinate_y_label.set_text(f"y={player.y:.2f}")
             self.floor_y_label.set_text(f"x={floor.floor_y}")
 
             for component in self.game_components:
@@ -378,6 +378,7 @@ class UIManager:
         if window_state == WindowState.PAUSE:
             self.window.fill(tuple(int(c * 0.8) for c in config.BACKGROUND_COLOR))
 
+            engine.draw_objects(self.window)
             player.draw(self.window, floor, engine.camera_offset_x)
             floor.draw(self.window)
 

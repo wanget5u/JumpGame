@@ -26,53 +26,11 @@ class Engine:
         self.objects = []
         self.camera_offset_x = 0
 
-    def check_block_collision_top(self, player: Player, new_y: float):
-        player_bottom = new_y + config.PLAYER_OUTER_SIZE // 2
-        player_left = player.x - config.PLAYER_OUTER_SIZE // 2
-        player_right = player.x + config.PLAYER_OUTER_SIZE // 2
-
-        highest_block_top = None
-        tolerance = 10
-
-        for obj in self.objects:
-            if obj.__class__.__name__ == 'Block':
-                block_size = config.BLOCK_OUTER_SIZE
-                block_left = obj.x - block_size // 2
-                block_right = obj.x + block_size // 2
-                block_top = obj.y - block_size // 2
-                block_bottom = obj.y + block_size // 2
-
-                if player_right > block_left and player_left < block_right:
-                    if player.velocity_y >= 0 and block_top - tolerance <= player_bottom <= block_bottom:
-                        if highest_block_top is None or block_top < highest_block_top:
-                            highest_block_top = block_top
-
-        return highest_block_top
-
-    def check_block_collision_horizontal(self, player: Player, new_x: float):
-        player_left = new_x - config.PLAYER_OUTER_SIZE // 2
-        player_right = new_x + config.PLAYER_OUTER_SIZE // 2
-        player_top = player.y - config.PLAYER_OUTER_SIZE // 2
-        player_bottom = player.y + config.PLAYER_OUTER_SIZE // 2
-
-        for obj in self.objects:
-            if obj.__class__.__name__ == 'Block':
-                block_size = config.BLOCK_OUTER_SIZE
-                block_left = obj.x - block_size // 2
-                block_right = obj.x + block_size // 2
-                block_top = obj.y - block_size // 2
-                block_bottom = obj.y + block_size // 2
-
-                if player_right >= block_left and player_left <= block_right and player_bottom >= block_top and player_top <= block_bottom:
-                    return True
-
-        return False
-
     def check_player_collision_with_objects(self, player: Player, screen: pygame.Surface):
         assert isinstance(player, Player), "player musi być instancją klasy Player"
         assert isinstance(screen, pygame.Surface), "screen musi być instancją pygame.Surface"
 
-        if self.check_block_collision_horizontal(player, screen):
+        if self.check_block_collision_sides(player, screen):
             return True
 
         for obj in self.objects:
@@ -137,9 +95,49 @@ class Engine:
         polygon = Polygon(polygon_points)
         return polygon.contains(point)
 
+    def check_block_collision_top(self, player: Player, new_y: float):
+        player_bottom = new_y + config.PLAYER_OUTER_SIZE // 2
+        player_left = player.x - config.PLAYER_OUTER_SIZE // 2
+        player_right = player.x + config.PLAYER_OUTER_SIZE // 2
+
+        highest_block_top = None
+
+        for obj in self.objects:
+            if obj.__class__.__name__ == 'Block':
+                block_size = config.BLOCK_OUTER_SIZE
+                block_left = obj.x - block_size // 2
+                block_right = obj.x + block_size // 2
+                block_top = obj.y - block_size // 2
+                block_bottom = obj.y + block_size // 2
+
+                if player_right >= block_left and player_left <= block_right:
+                    if player.velocity_y >= 0 and block_top <= player_bottom <= block_bottom:
+                        if highest_block_top is None or block_top < highest_block_top:
+                            highest_block_top = block_top
+
+        return highest_block_top
+
+    def check_block_collision_sides(self, player: Player, new_x: float):
+        player_left = new_x - config.PLAYER_OUTER_SIZE // 2
+        player_right = new_x + config.PLAYER_OUTER_SIZE // 2
+        player_top = player.y - config.PLAYER_OUTER_SIZE // 2
+        player_bottom = player.y + config.PLAYER_OUTER_SIZE // 2
+
+        for obj in self.objects:
+            if obj.__class__.__name__ == 'Block':
+                block_size = config.BLOCK_OUTER_SIZE
+                block_left = obj.x - block_size // 2
+                block_right = obj.x + block_size // 2
+                block_top = obj.y - block_size // 2
+                block_bottom = obj.y + block_size // 2
+
+                if player_right >= block_left and player_left <= block_right and player_bottom >= block_top and player_top <= block_bottom:
+                    return True
+
+        return False
+
     """ Aktualizuje pozycję gracza na podstawie prędkości, grawitacji i czasu (delta_time):
     Dodaje grawitację, przesuwa gracza, obsługuje wykrycie kolizji z podłożem (floor_y) """
-
     def update_player(self, player: Player, delta_time: float, screen: pygame.Surface):
         assert isinstance(player, Player), "player musi być instancją klasy Player"
         assert isinstance(delta_time, float) and delta_time > 0, "delta_time musi być dodatnią liczbą zmiennoprzecinkową"
@@ -149,44 +147,44 @@ class Engine:
 
         new_x = player.x + config.PLAYER_SPEED * delta_time
 
-        if not self.check_block_collision_horizontal(player, new_x):
-            player.x = new_x
+        # if self.check_block_collision_sides(player, new_x):
+        #     return True
+
+        player.x = new_x
 
         new_y = player.y + player.velocity_y * delta_time
 
         block_top = self.check_block_collision_top(player, new_y)
 
-        floor_y_world = self.floor.floor_y
-        ground_y = floor_y_world - config.PLAYER_OUTER_SIZE / 2
+        floor_y = self.floor.floor_y
+        ground_y = floor_y - config.PLAYER_OUTER_SIZE // 2
+
+        player_bottom = new_y + config.PLAYER_OUTER_SIZE // 2
+
+        next_y = new_y
+        on_ground = False
 
         landing_y = ground_y
         if block_top is not None and player.velocity_y >= 0:
-            block_landing_y = block_top
-            player_bottom = new_y + config.PLAYER_OUTER_SIZE // 2
-
-            if player_bottom <= block_landing_y:
-                if block_landing_y < ground_y:
-                    landing_y = block_landing_y
-
-        tolerance = 10
-
-        if player.velocity_y >= 0:
-            if new_y + config.PLAYER_OUTER_SIZE // 2 >= landing_y - tolerance:
-                player.y = landing_y
+            block_landing_y = block_top - config.PLAYER_OUTER_SIZE // 2
+            if player_bottom >= block_top:
+                next_y = block_landing_y
                 player.velocity_y = 0
-                player.on_ground = True
-            else:
-                player.y = new_y
-                player.on_ground = False
-        else:
-            player.y = new_y
-            player.on_ground = False
+                on_ground = True
+
+        elif player_bottom >= floor_y:
+            next_y = floor_y - config.PLAYER_OUTER_SIZE // 2
+            player.velocity_y = 0
+            on_ground = True
+
+        player.y = next_y
+        player.on_ground = on_ground
+
+        print(f"player_y = {player.y}, landing_y = {landing_y}, block_top = {block_top}, player_bottom = {new_y + config.PLAYER_OUTER_SIZE // 2} on_ground = {player.on_ground}, velocity = {player.velocity_y}")
 
         if player.x >= config.SCREEN_WIDTH // 6:
             target_camera_x = -(player.x - config.SCREEN_WIDTH // 6)
             self.camera_offset_x = int(target_camera_x)
-
-        player.update_size(screen, self.floor, self.camera_offset_x)
 
     """ Powoduje skok gracza: nadaje prędkość w górę, sprawdza, czy gracz jest na ziemi, zanim pozwoli na skok """
     def player_jump(self, player: Player):
