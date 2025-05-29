@@ -2,36 +2,90 @@
 
 A game that bears resemblence to the popular game <b>"Geometry Dash"</b>. Made entirely from scratch by using <b>pygame</b> library. Project serves as a <b>PPY</b> class final assignment at my university.
 
-1. Clone repository
+![screenshot](assets/screenshot5.PNG)
 
-`git clone https://github.com/wanget5u/JumpGame.git`
+## About 
+    
+### How to Play
+- **Spacebar/Up Arrow**: Jump
+- **Hold**: Continuous jumping
+- **Escape**: Returns you to the previous window state
+- Navigate through obstacles and reach the end of each level
+- Avoid spikes and other hazards
+- Time your jumps carefully to maintain momentum
 
-2. Install requirements
+## Features: </h4>
 
-`pip install -r requirements.txt`
+    - Custom Physics Engine: Built from scratch using pygame
+    - Multiple Levels: Various challenging levels with increasing difficulty
+    - Collision Detection: Precise collision system for blocks and spikes
+    - Smooth Gameplay: Optimized performance for responsive controls
+    - Asset Management: Organized sprite and sound assets
 
-3. Run the game
+## 📁 Project Structure
 
-`python main.py`
+```
+JumpGame/
+├── .idea/          # IDE configuration files
+├── assets/         # Game sprites, sounds, and other media
+├── config/         # Game configuration files
+├── game/           # Core game logic and mechanics
+├── levels/         # Level definitions and layouts
+├── objects/        # Game objects (player, obstacles, etc.)
+├── ui/             # User interface components
+├── main.py         # Main game entry point
+├── requirements.txt # Python dependencies
+└── Dockerfile      # Docker configuration
+```
 
-<h3>About: </h4>
+## 🛠️ Installation
 
-    Controls:
-    Jump - Space / Left_mouse_click
-    Back to previous window_state - ESC_key
+### Prerequisites
 
-<h3> Title menu: </h3>
+- Python 3.7 or higher
+- pip package manager
+
+### Local Setup
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/wanget5u/JumpGame.git
+   cd JumpGame
+   ```
+
+2. **Install dependencies**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. **Run the game**
+   ```bash
+   python main.py
+   ```
+
+### Docker Setup
+
+Alternatively, you can run the game using Docker:
+
+```bash
+  docker build -t jump-game .
+  docker run -it jump-game
+```
+
+# In-game screenshots
+
+### Title menu:
 
 ![screenshot](assets/screenshot1.PNG)
 
-<h3> Level editor: </h3>
+### Level editor:
 
 ![screenshot](assets/screenshot2.PNG)
 
-<h3> Level loader: </h3>
+### Level loader:
 
 ![screenshot](assets/screenshot3.PNG)
 
-<h3> Level save: </h3>
+### Level save:
 
 ![screenshot](assets/screenshot4.PNG)
