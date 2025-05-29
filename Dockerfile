@@ -1,25 +1,15 @@
-FROM python:3.13.2
-
-RUN apt-get update && apt-get install -y \
-    python3-dev \
-    libfreetype6-dev \
-    libavformat-dev \
-    libsdl2-dev \
-    libsdl2-image-dev \
-    libsdl2-mixer-dev \
-    libsdl2-ttf-dev \
-    libsm6 \
-    libxext6 \
-    libxrender-dev \
-    libx11-6 \
-    && rm -rf /var/lib/apt/lists/* \
+FROM python:3.11
 
 WORKDIR /app
 
-COPY requirements.txt .
+# Zainstaluj zależności systemowe, w tym fontconfig
+RUN apt-get update && apt-get install -y \
+    fontconfig \
+    && rm -rf /var/lib/apt/lists/*
 
-RUN pip install --no-cache-dir -r requirements.txt.txt
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
 
-ENV DISPLAY=:0
+COPY . .
 
 CMD ["python", "main.py"]
