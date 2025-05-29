@@ -54,6 +54,14 @@ class GameManager:
             keys = pygame.key.get_pressed()
             mouse_buttons = pygame.mouse.get_pressed()
 
+            self.ui_manager.progress_bar.value = self.player.x
+            self.ui_manager.attempt_counter_label.x = self.engine.camera_offset_x + 400
+            self.ui_manager.attempt_counter_label.set_text(f"Attempt {self.engine.attempts}")
+            self.ui_manager.coordinate_x_label.set_text(f"x={self.player.x:.2f}")
+            self.ui_manager.coordinate_y_label.set_text(f"y={self.player.y:.2f}")
+            self.ui_manager.floor_y_label.set_text(f"x={self.floor.floor_y}")
+            self.ui_manager.progress_percentage_label.set_text(f"{self.ui_manager.progress_bar.get_percentage():.2f} %")
+
             if keys[pygame.K_UP] or mouse_buttons[0]:
                 self.engine.player_jump(self.player)
 
@@ -71,6 +79,8 @@ class GameManager:
 
         self.engine.set_objects_from_layout(self.current_level["layout"])
         self.engine.attempts = 1
+
+        self.ui_manager.progress_bar.max_value = self.engine.get_furthest_object_x()
 
         self.set_window_state(WindowState.GAME)
 

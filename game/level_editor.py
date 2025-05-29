@@ -67,6 +67,8 @@ class LevelEditor:
 
         self.buttons = {}
 
+        self.max_slider_x = config.MAX_SLIDER_X
+
         self.editor_view_init()
 
     def editor_view_init(self):
@@ -98,11 +100,12 @@ class LevelEditor:
 
         self.selected_tool_label = Label(
             920, 850, "")
+
         self.change_tool("select")
 
         self.slider = Slider(
             self.screen_width // 2, 60,
-            500, 80, 0, 2500,0)
+            500, 80, 0, self.max_slider_x,0)
 
         self.x_coordinate_label = Label(
             self.screen_width // 2, 125, "")
@@ -219,6 +222,16 @@ class LevelEditor:
 
         self.window.blit(grid_surface, (0, 0))
 
+    def update_slider_x(self):
+        furthest_obj_x = 0
+
+        for obj in self.current_level["layout"]:
+            if obj["x"] > furthest_obj_x:
+                furthest_obj_x = obj["x"]
+
+        if furthest_obj_x + config.SLIDER_MARGIN > self.slider.max_val:
+            self.slider.max_val = furthest_obj_x + config.SLIDER_MARGIN
+
     def draw_objects(self):
         for x, obj in enumerate(self.current_level["layout"]):
             is_selected = (x == self.selected_object_index)
@@ -277,6 +290,8 @@ class LevelEditor:
         self.current_level["layout"].append(new_obj)
         self.selected_object = new_obj
         self.selected_object_index = len(self.current_level["layout"]) - 1
+
+        self.update_slider_x()
 
     def delete_object(self):
         world_pos = self.screen_to_world(pygame.mouse.get_pos())

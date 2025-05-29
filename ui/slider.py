@@ -73,6 +73,8 @@ class Slider:
             self.value = self.min_val + self.relative_position * (self.max_val - self.min_val)
 
     def update_size(self, screen: pygame.Surface):
+        assert isinstance(screen, pygame.Surface), "screen musi być instancją pygame.Surface"
+
         screen_width, screen_height = screen.get_size()
 
         scale_x = screen_width / config.SCREEN_WIDTH

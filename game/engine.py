@@ -9,8 +9,6 @@ from objects.spike import Spike
 from objects.jump_pad import JumpPad
 from objects.jump_orb import JumpOrb
 
-from ui.label import Label
-
 from shapely.geometry import Point
 from shapely.geometry.polygon import Polygon
 
@@ -26,8 +24,6 @@ class Engine:
         self.original_screen_width = config.SCREEN_WIDTH
 
         self.attempts = 1
-        self.attempt_counter_label = Label(
-            400, 400, "", 128)
 
         self.objects = []
         self.camera_offset_x = 0
@@ -146,8 +142,6 @@ class Engine:
         player.y = next_y
         player.on_ground = on_ground
 
-        print(f"player_y = {player.y}, landing_y = {landing_y}, block_top = {block_top}, player_bottom = {new_y + config.PLAYER_OUTER_SIZE // 2} on_ground = {player.on_ground}, velocity = {player.velocity_y}")
-
         new_x = player.x + config.PLAYER_SPEED * delta_time
         if not self.check_block_collision_left_bottom(player, new_x):
             player.x = new_x
@@ -245,3 +239,15 @@ class Engine:
         assert isinstance(world_pos, tuple) and all(isinstance(x, int) for x in world_pos), "world_pos musi być krotką 2 liczb całkowitych"
         x, y = world_pos
         return x + self.camera_offset_x, y
+
+    def get_furthest_object_x(self):
+        furthest_x = 0
+
+        for obj in self.objects:
+            if obj.x > furthest_x:
+                furthest_x = obj.x
+
+        if furthest_x == 0:
+            furthest_x = config.MIN_LEVEL_LENGTH
+
+        return furthest_x + config.END_WALL_X

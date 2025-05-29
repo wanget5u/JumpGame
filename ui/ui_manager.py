@@ -12,6 +12,7 @@ from ui.label import Label
 from ui.button import Button
 from ui.text_input_field import TextInputField
 from ui.checkbox import Checkbox
+from ui.progress_bar import ProgressBar
 
 class UIManager:
     def __init__(self):
@@ -38,6 +39,9 @@ class UIManager:
         self.coordinate_x_label = None
         self.coordinate_y_label = None
         self.floor_y_label = None
+        self.attempt_counter_label = None
+        self.progress_bar = None
+        self.progress_percentage_label = None
 
         # [SELECT]
         self.select_components = []
@@ -156,7 +160,17 @@ class UIManager:
         self.floor_y_label = Label(
             430, 100, "")
 
-        self.game_components = [self.coordinate_x_label, self.coordinate_y_label, self.floor_y_label]
+        self.attempt_counter_label = Label(
+            400, 400, "", 128)
+
+        self.progress_bar = ProgressBar(
+            self.screen_width // 2, 40,
+            500, 40, 0)
+
+        self.progress_percentage_label = Label(
+            self.screen_width // 2 + 310, 42, "")
+
+        self.game_components = [self.coordinate_x_label, self.coordinate_y_label, self.floor_y_label, self.attempt_counter_label, self.progress_bar, self.progress_percentage_label]
 
     def level_select_init(self):
         self.select_title_label = Label(
@@ -359,14 +373,6 @@ class UIManager:
 
         for component in self.game_components:
             component.draw(self.window)
-
-        self.coordinate_x_label.set_text(f"x={player.x:.2f}")
-        self.coordinate_y_label.set_text(f"y={player.y:.2f}")
-        self.floor_y_label.set_text(f"x={floor.floor_y}")
-
-        engine.attempt_counter_label.x = engine.camera_offset_x + 400
-        engine.attempt_counter_label.set_text(f"Attempt {engine.attempts}")
-        engine.attempt_counter_label.draw(self.window)
 
     def render(self, window_state: WindowState, player: Player, floor: Floor, level_editor: LevelEditor, engine: Engine):
         assert isinstance(window_state, WindowState), "window_state musi być obiektem instancji WindowState"
