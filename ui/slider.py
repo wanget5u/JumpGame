@@ -39,10 +39,10 @@ class Slider:
         self.inner_rect = pygame.Rect(0, 0, self.width, self.height)
         self.slider_rect = pygame.Rect(0, 0, self.slider_size, self.slider_size)
 
-    def draw(self, screen):
-        assert isinstance(screen, pygame.Surface), "screen musi być instancją pygame.Surface"
+    def draw(self, screen: pygame.Surface):
+        self._validate_draw_params(screen)
 
-        self.update_size(screen)
+        self._update_size(screen)
 
         pygame.draw.rect(screen, self.color, self.outer_rect, border_radius=4)
         pygame.draw.rect(screen, self.inner_color, self.inner_rect, border_radius=4)
@@ -72,9 +72,7 @@ class Slider:
             self.relative_position = (clamped_x - min_x) / (max_x - min_x)
             self.value = self.min_val + self.relative_position * (self.max_val - self.min_val)
 
-    def update_size(self, screen: pygame.Surface):
-        assert isinstance(screen, pygame.Surface), "screen musi być instancją pygame.Surface"
-
+    def _update_size(self, screen: pygame.Surface):
         screen_width, screen_height = screen.get_size()
 
         scale_x = screen_width / config.SCREEN_WIDTH
@@ -101,3 +99,8 @@ class Slider:
 
         self.slider_rect = pygame.Rect(0, 0, slider_size_scaled, slider_size_scaled)
         self.slider_rect.center = (slider_x, slider_y)
+
+    @staticmethod
+    def _validate_draw_params(screen: pygame.Surface):
+        if not isinstance(screen, pygame.Surface):
+            raise ValueError("screen musi być instancją pygame.Surface")

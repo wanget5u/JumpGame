@@ -9,3 +9,4 @@ class WindowState(Enum):
     EDIT_CONFIRM = auto()
     SAVE_PROMPT = auto()
     LOAD_PROMPT = auto()
+    LEVEL_COMPLETE = auto()

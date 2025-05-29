@@ -94,6 +94,13 @@ class UIManager:
 
         self.level_info_buttons = []
 
+        # [LEVEL COMPLETE]
+        self.level_complete_components = []
+
+        self.level_complete_title_label = None
+        self.level_complete_back_button = None
+        self.level_complete_retry_button = None
+
         self.screen_width = config.SCREEN_WIDTH
         self.screen_height = config.SCREEN_HEIGHT
 
@@ -101,8 +108,7 @@ class UIManager:
 
         self.levels = levels
 
-        self.window = pygame.display.set_mode(
-            (self.screen_width, self.screen_height), pygame.RESIZABLE)
+        self.window = pygame.display.set_mode((self.screen_width, self.screen_height), pygame.RESIZABLE)
 
         self.menu_view_init()
         self.pause_view_init()
@@ -111,6 +117,7 @@ class UIManager:
         self.edit_confirm_view_init()
         self.save_prompt_init()
         self.load_prompt_init()
+        self.level_complete_init()
 
     def menu_view_init(self):
         self.title_label = Label(
@@ -170,7 +177,7 @@ class UIManager:
         self.progress_percentage_label = Label(
             self.screen_width // 2 + 310, 42, "")
 
-        self.game_components = [self.coordinate_x_label, self.coordinate_y_label, self.floor_y_label, self.attempt_counter_label, self.progress_bar, self.progress_percentage_label]
+        self.game_components = [self.attempt_counter_label, self.progress_bar, self.progress_percentage_label]
 
     def level_select_init(self):
         self.select_title_label = Label(
@@ -277,6 +284,21 @@ class UIManager:
              self.filter_title_label,
              self.filter_easy_checkbox, self.filter_normal_checkbox, self.filter_hard_checkbox]
 
+    def level_complete_init(self):
+        self.level_complete_title_label = Label(
+            self.screen_width // 2, self.screen_height // 2 - 185,
+            "LEVEL COMPLETE!", 200)
+
+        self.level_complete_back_button = Button(
+            self.screen_width // 2 + 140, self.screen_height // 2 + 250,
+            220, 80, "Back to Title")
+
+        self.level_complete_retry_button = Button(
+            self.screen_width // 2 - 140, self.screen_height // 2 + 250,
+            220, 80, "Retry")
+
+        self.level_complete_components = [self.level_complete_title_label, self.level_complete_back_button, self.level_complete_retry_button]
+
     def create_level_load_buttons(self):
         self.level_info_buttons.clear()
 
@@ -368,7 +390,7 @@ class UIManager:
         assert isinstance(level_editor, LevelEditor), "level_editor musi być instancją klasy LevelEditor"
 
         engine.draw_objects(self.window)
-        player.draw(self.window, floor, engine.camera_offset_x)
+        player.draw(self.window, engine.camera_offset_x)
         floor.draw(self.window)
 
         for component in self.game_components:
@@ -441,5 +463,11 @@ class UIManager:
 
             for level_button, level in self.level_info_buttons:
                 level_button.draw(self.window)
+
+        if window_state == WindowState.LEVEL_COMPLETE:
+            self.window.fill(tuple(int(c * 0.8) for c in config.BACKGROUND_COLOR))
+
+            for component in self.level_complete_components:
+                component.draw(self.window)
 
         pygame.display.update()

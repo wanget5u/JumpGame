@@ -21,25 +21,19 @@ class Player:
         self.speed = config.PLAYER_SPEED
 
         self.velocity_y = 0
-        self.rotation = 0
         self.on_ground = False
 
         self.distance_to_floor = config.FLOOR_Y - self.y
 
-    def draw(self, screen: pygame.Surface, floor: Floor, camera_offset_x: int):
-        assert isinstance(screen, pygame.Surface), "screen musi być instancją pygame.Surface"
-        assert isinstance(floor, Floor), "floor musi być instancją klasy Floor"
-        assert isinstance(camera_offset_x, int), "camera_offset_x musi być liczbą całkowitą"
+    def draw(self, screen: pygame.Surface, camera_offset_x: int):
+        self._validate_draw_params(screen, camera_offset_x)
 
-        self.update_size(screen, floor, camera_offset_x)
+        self._update_size(screen, camera_offset_x)
 
         pygame.draw.rect(screen, self.outer_color, self.outer_rect, border_radius=2)
         pygame.draw.rect(screen, self.inner_color, self.inner_rect, border_radius=2)
 
-    def update_size(self, screen: pygame.Surface, floor: Floor, camera_offset_x: int):
-        assert isinstance(screen, pygame.Surface), "screen musi być instancją pygame.Surface"
-        assert isinstance(floor, Floor), "floor musi być instancją klasy Floor"
-        assert isinstance(camera_offset_x, int), "camera_offset_x musi być liczbą całkowitą"
+    def _update_size(self, screen: pygame.Surface, camera_offset_x: int):
 
         screen_width, screen_height = screen.get_size()
 
@@ -55,3 +49,10 @@ class Player:
 
         self.inner_rect = pygame.Rect(0, 0, rect_inner_size, rect_inner_size)
         self.inner_rect.center = (rect_x, rect_y)
+
+    @staticmethod
+    def _validate_draw_params(screen: pygame.Surface, camera_offset_x: int):
+        if not isinstance(screen, pygame.Surface):
+            raise ValueError("screen musi być instancją pygame.Surface")
+        if not isinstance(camera_offset_x, int):
+            raise ValueError("camera_offset_x musi być liczbą całkowitą")

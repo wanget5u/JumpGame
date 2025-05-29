@@ -39,10 +39,10 @@ class Checkbox:
         self.is_pressed = False
 
     """Rysowanie checkboxa i tekstu na ekranie."""
-    def draw(self, screen):
-        assert isinstance(screen, pygame.Surface), "screen musi być instancją pygame.Surface"
+    def draw(self, screen: pygame.Surface):
+        self._validate_draw_params(screen)
 
-        self.update_size(screen)
+        self._update_size(screen)
 
         if self.is_pressed:
             current_color = self.color_click
@@ -78,9 +78,7 @@ class Checkbox:
                     on_toggle()
             self.is_pressed = False
 
-    def update_size(self, screen: pygame.Surface):
-        assert isinstance(screen, pygame.Surface), "screen musi być instancją pygame.Surface"
-
+    def _update_size(self, screen: pygame.Surface):
         screen_width, screen_height = screen.get_size()
 
         checkbox_size = int(screen_width * (self.size / config.SCREEN_WIDTH))
@@ -93,3 +91,8 @@ class Checkbox:
 
         self.scaled_text_size = int(screen_height * (self.text_size / config.SCREEN_HEIGHT))
         self.font = pygame.font.SysFont(None, self.scaled_text_size)
+
+    @staticmethod
+    def _validate_draw_params(screen: pygame.Surface):
+        if not isinstance(screen, pygame.Surface):
+            raise ValueError("screen musi być instancją pygame.Surface")

@@ -49,9 +49,9 @@ class Button:
         self.is_pressed = False
 
     def draw(self, screen: pygame.Surface):
-        assert isinstance(screen, pygame.Surface), "screen musi być instancją pygame.Surface"
+        self._validate_draw_params(screen)
 
-        self.update_size(screen)
+        self._update_size(screen)
 
         if self.is_pressed:
             current_color = self.color_click
@@ -76,9 +76,7 @@ class Button:
             description_rect = description_surface.get_rect(center=(self.scaled_x - dx, self.scaled_y + dy))
             screen.blit(description_surface, description_rect)
 
-    def update_size(self, screen: pygame.Surface):
-        assert isinstance(screen, pygame.Surface), "screen musi być instancją pygame.Surface"
-
+    def _update_size(self, screen: pygame.Surface):
         screen_width, screen_height = screen.get_size()
 
         self.scaled_width = int(screen_width * (self.width / config.SCREEN_WIDTH))
@@ -110,3 +108,8 @@ class Button:
             if self.is_pressed and self.is_hovered():
                 on_click_event()
             self.is_pressed = False
+
+    @staticmethod
+    def _validate_draw_params(screen: pygame.Surface):
+        if not isinstance(screen, pygame.Surface):
+            raise ValueError("screen musi być instancją pygame.Surface")

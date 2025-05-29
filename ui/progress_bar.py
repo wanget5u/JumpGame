@@ -27,17 +27,15 @@ class ProgressBar:
         self.outer_rect = pygame.Rect(0, 0, self.width, self.height)
         self.progress_rect = pygame.Rect(0, 0, self.width, self.height)
 
-    def draw(self, screen):
-        assert isinstance(screen, pygame.Surface), "screen musi być instancją pygame.Surface"
+    def draw(self, screen: pygame.Surface):
+        self._validate_draw_params(screen)
 
-        self.update_size(screen)
+        self._update_size(screen)
 
         pygame.draw.rect(screen, self.color, self.outer_rect, border_radius=20)
         pygame.draw.rect(screen, self.inner_color, self.progress_rect, border_radius=20)
 
-    def update_size(self, screen: pygame.Surface):
-        assert isinstance(screen, pygame.Surface), "screen musi być instancją pygame.Surface"
-
+    def _update_size(self, screen: pygame.Surface):
         screen_width, screen_height = screen.get_size()
 
         scale_x = screen_width / config.SCREEN_WIDTH
@@ -64,3 +62,8 @@ class ProgressBar:
 
     def get_percentage(self):
         return (self.value / self.max_value) * 100
+
+    @staticmethod
+    def _validate_draw_params(screen: pygame.Surface):
+        if not isinstance(screen, pygame.Surface):
+            raise ValueError("screen musi być instancją pygame.Surface")

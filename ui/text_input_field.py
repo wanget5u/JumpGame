@@ -41,6 +41,28 @@ class TextInputField:
         self.max_length = max_length
         self.active = False
 
+    def draw(self, screen: pygame.Surface):
+        self._validate_draw_params(screen)
+
+        self._update_size(screen)
+
+        txt_surface = self.font.render(self.text, True, self.text_color)
+        text_rect = txt_surface.get_rect(center=self.rect.center)
+        screen.blit(txt_surface, text_rect)
+        pygame.draw.rect(screen, self.color, self.rect, 5)
+
+    def _update_size(self, screen: pygame.Surface):
+        screen_width, screen_height = screen.get_size()
+
+        rect_width = int(self.width * (screen_width / config.SCREEN_WIDTH))
+        rect_height = int(self.height * (screen_height / config.SCREEN_HEIGHT))
+        rect_x = int(screen_width * (self.x / config.SCREEN_WIDTH))
+        rect_y = int(screen_height * (self.y / config.SCREEN_HEIGHT))
+
+        self.rect = pygame.Rect(0, 0, rect_width, rect_height)
+        self.rect.center = (rect_x, rect_y)
+        self.font = pygame.font.SysFont(None, int(self.text_size))
+
     def handle_event(self, event):
         if event.type == pygame.MOUSEBUTTONDOWN:
             if self.rect.collidepoint(event.pos):
@@ -58,26 +80,7 @@ class TextInputField:
             elif len(self.text) < self.max_length and event.unicode.isalnum():
                 self.text += event.unicode
 
-    def draw(self, screen):
-        assert isinstance(screen, pygame.Surface), "screen musi być instancją pygame.Surface"
-
-        self.update_size(screen)
-
-        txt_surface = self.font.render(self.text, True, self.text_color)
-        text_rect = txt_surface.get_rect(center=self.rect.center)
-        screen.blit(txt_surface, text_rect)
-        pygame.draw.rect(screen, self.color, self.rect, 5)
-
-    def update_size(self, screen: pygame.Surface):
-        assert isinstance(screen, pygame.Surface), "screen musi być instancją pygame.Surface"
-
-        screen_width, screen_height = screen.get_size()
-
-        rect_width = int(self.width * (screen_width / config.SCREEN_WIDTH))
-        rect_height = int(self.height * (screen_height / config.SCREEN_HEIGHT))
-        rect_x = int(screen_width * (self.x / config.SCREEN_WIDTH))
-        rect_y = int(screen_height * (self.y / config.SCREEN_HEIGHT))
-
-        self.rect = pygame.Rect(0, 0, rect_width, rect_height)
-        self.rect.center = (rect_x, rect_y)
-        self.font = pygame.font.SysFont(None, int(self.text_size))
+    @staticmethod
+    def _validate_draw_params(screen: pygame.Surface):
+        if not isinstance(screen, pygame.Surface):
+            raise ValueError("screen musi być instancją pygame.Surface")

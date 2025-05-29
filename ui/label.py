@@ -27,9 +27,9 @@ class Label:
 
     """Rysowanie tekstu na ekranie."""
     def draw(self, screen):
-        assert isinstance(screen, pygame.Surface), "screen musi być instancją pygame.Surface"
+        self._validate_draw_params(screen)
 
-        self.update_size(screen)
+        self._update_size(screen)
 
         text_surface = self.font.render(self.text, True, self.text_color)
         text_rect = text_surface.get_rect(center=(self.rel_x, self.rel_y))
@@ -37,9 +37,7 @@ class Label:
 
     """Aktualizacja wielkości guzika względem dynamicznie zmieniającej się rozdzielczości okna."""
 
-    def update_size(self, screen: pygame.Surface):
-        assert isinstance(screen, pygame.Surface), "screen musi być instancją pygame.Surface"
-
+    def _update_size(self, screen: pygame.Surface):
         screen_width, screen_height = screen.get_size()
 
         self.rel_x = int(screen_width * (self.x / config.SCREEN_WIDTH))
@@ -50,5 +48,15 @@ class Label:
 
     """Ustawienie tekstu labelu."""
     def set_text(self, text: str):
-        assert isinstance(text, str), "tekst musi być typu str"
+        self._validate_set_text(text)
         self.text = text
+
+    @staticmethod
+    def _validate_draw_params(screen: pygame.Surface):
+        if not isinstance(screen, pygame.Surface):
+            raise ValueError("screen musi być instancją pygame.Surface")
+
+    @staticmethod
+    def _validate_set_text(text: str):
+        if not isinstance(text, str):
+            raise ValueError("tekst musi być typu str")
