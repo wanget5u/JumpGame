@@ -203,22 +203,36 @@ class LevelEditor:
     def draw_grid(self):
         screen_width, screen_height = self.window.get_size()
 
+        width_scale = screen_width / self.screen_width
+        height_scale = screen_height / self.screen_height
+
+        self.grid_size = int(config.GRID_SIZE * min(width_scale, height_scale))
+        self.toolbar_height = int(config.TOOLBAR_HEIGHT * height_scale)
+
         start_x = (self.camera_offset_x % self.grid_size)
         start_y = 0
 
         grid_surface = pygame.Surface((screen_width, screen_height), pygame.SRCALPHA)
 
-        for x in range(start_x, screen_width, self.grid_size):
+        x = start_x
+        while x < screen_width:
             pygame.draw.line(grid_surface, self.grid_color, (x, 0), (x, screen_height - self.toolbar_height))
+            x += self.grid_size
 
-        for y in range(start_y, screen_height - self.toolbar_height, self.grid_size):
+        y = start_y
+        while y < screen_height - self.toolbar_height:
             pygame.draw.line(grid_surface, self.grid_color, (0, y), (screen_width, y))
+            y += self.grid_size
 
         start_world_x = self.grid_size * 2
         screen_x = start_world_x + self.camera_offset_x
 
         if 0 <= screen_x < screen_width:
-            pygame.draw.line(grid_surface, config.GRID_START_LINE_COLOR, (screen_x, 0), (screen_x, screen_height - self.toolbar_height), 2)
+            pygame.draw.line(
+                grid_surface,
+                config.GRID_START_LINE_COLOR,
+                (screen_x, 0),
+                (screen_x, screen_height - self.toolbar_height), 2)
 
         self.window.blit(grid_surface, (0, 0))
 
@@ -286,6 +300,8 @@ class LevelEditor:
             y += self.grid_size // 2
 
         new_obj = {"type": obj_type, "x": x, "y": y}
+
+        print(x, y)
 
         self.current_level["layout"].append(new_obj)
         self.selected_object = new_obj

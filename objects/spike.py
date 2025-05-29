@@ -57,8 +57,5 @@ class Spike:
             (x - 2 + inner_width // 2, y + inner_height // 2)
         ]
 
-    def get_collision_rect(self):
-        return pygame.Rect(self.outer_points[1][0], self.outer_points[0][1], self.outer_width, self.outer_height)
-
     def get_collision_points(self):
         return self.outer_points

@@ -12,9 +12,6 @@ from objects.spike import Spike
 from objects.jump_pad import JumpPad
 from objects.jump_orb import JumpOrb
 
-from shapely.geometry import Point
-from shapely.geometry.polygon import Polygon
-
 """Główny silnik gry odpowiedzialny za fizykę, kolizje i zarządzanie obiektami."""
 class Engine:
     def __init__(self, floor: Floor):
@@ -171,7 +168,8 @@ class Engine:
         player_bounds = self._get_player_bounds_at_x(player, new_x)
 
         for obj in self.objects:
-            if not isinstance(obj, Block): continue
+            if not (isinstance(obj, Block) or isinstance(obj, Spike)):
+                continue
 
             block_bounds = self._get_block_bounds(obj)
 
@@ -331,6 +329,17 @@ class Engine:
         x, y = world_pos
         return x + self.camera_offset_x, y
 
+    """Konwertuje współrzędne ekranu na współrzędne świata."""
+    def screen_to_world(self, screen_pos: Tuple[int, int]) -> Tuple[int, int]:
+        """ Args:
+                screen_pos: Pozycja w świecie (x, y)
+            Returns:
+                Pozycja na ekranie (x, y)
+        """
+        assert isinstance(screen_pos, tuple) and all(isinstance(x, int) for x in screen_pos), "screen_pos musi być krotką 2 liczb całkowitych"
+        x, y = screen_pos
+        return x - self.camera_offset_x, y
+
     """Zwraca pozycję X najdalszego obiektu w poziomie."""
     def get_furthest_object_x(self) -> float:
         """ Returns:
@@ -360,50 +369,6 @@ class Engine:
         Engine._validate_player(player)
         Engine._validate_obstacle_rect(obstacle_rect)
         return player.outer_rect.colliderect(obstacle_rect)
-
-    """Sprawdza kolizję prostokąta z wielokątem."""
-    def point_in_polygon_collision(self, outer_rect: pygame.Rect, polygon_points: List[Tuple[int, int]]) -> bool:
-        """ Args:
-                outer_rect: Prostokąt do sprawdzenia
-                polygon_points: Punkty wielokąta
-            Returns:
-                True, jeśli wystąpiła kolizja; False w przeciwnym wypadku
-        """
-        self._validate_rect_polygon_params(outer_rect, polygon_points)
-
-        # Czy któryś z rogów prostokąta jest w wielokącie
-        rect_corners = [
-            (outer_rect.left, outer_rect.top),
-            (outer_rect.right, outer_rect.top),
-            (outer_rect.left, outer_rect.bottom),
-            (outer_rect.right, outer_rect.bottom)
-        ]
-
-        for corner in rect_corners:
-            if self.point_in_polygon(corner, polygon_points):
-                return True
-
-        # Czy któryś punkt wielokąta jest w prostokącie
-        for point in polygon_points:
-            if outer_rect.collidepoint(point):
-                return True
-
-        return False
-
-    """Sprawdza czy punkt znajduje się wewnątrz wielokąta."""
-    @staticmethod
-    def point_in_polygon(point: Tuple[int, int], polygon_points: List[Tuple[int, int]]) -> bool:
-        """ Args:
-                point: Punkt do sprawdzenia
-                polygon_points: Punkty wielokąta
-            Returns:
-                True, jeśli punkt jest w wielokącie
-        """
-        Engine._validate_point_polygon_params(point, polygon_points)
-
-        point_geom = Point(point)
-        polygon_geom = Polygon(polygon_points)
-        return polygon_geom.contains(point_geom)
 
     """Sprawdza czy gracz dotknął podłoża."""
     def check_player_collision_with_floor(self, player: Player, screen: pygame.Surface) -> bool:
