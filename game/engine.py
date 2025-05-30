@@ -325,7 +325,7 @@ class Engine:
         self._validate_player(player)
 
         player.x = 90
-        player.y = self.floor.floor_y - 10
+        player.y = self.floor.floor_y - player.outer_size // 2
         player.velocity_y = 0
         player.on_ground = True
         self.camera_offset_x = 0
