@@ -232,6 +232,8 @@ class GameManager:
 
         def load_level_action(level_data):
             self.level_editor.load_level(int(level_data["index"]))
+            self.level_editor.slider.max_val = config.MAX_SLIDER_X
+            self.level_editor.update_slider_x()
             self.set_window_state(WindowState.EDIT)
 
         for button, level in self.ui_manager.level_info_buttons:
