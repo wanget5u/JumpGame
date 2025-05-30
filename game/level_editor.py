@@ -10,8 +10,8 @@ from config import config
 
 from objects.block import Block
 from objects.spike import Spike
-# from objects.jump_pad import
-# from objects.jump_orb import
+from objects.jump_pad import JumpPad
+from objects.jump_orb import JumpOrb
 
 class LevelEditor:
     def __init__(self, window: pygame.Surface, levels, floor: Floor):
@@ -271,14 +271,15 @@ class LevelEditor:
             else:
                 pygame.draw.circle(self.window, highlight_color, (screen_pos[0], screen_pos[1]), self.grid_size // 2, 2)
 
-        if obj_type == "block":
-            block = Block(screen_pos[0], screen_pos[1])
-            block.draw(self.window)
-        elif obj_type == "spike":
-            spike = Spike(
-                screen_pos[0],
-                screen_pos[1])
-            spike.draw(self.window)
+        types = {
+            "block" : Block(screen_pos[0], screen_pos[1]),
+            "spike" : Spike(screen_pos[0], screen_pos[1]),
+            "jump_orb" : JumpOrb(screen_pos[0], screen_pos[1]),
+            "jump_pad": JumpPad(screen_pos[0], screen_pos[1])
+        }
+
+        types[obj_type].draw(self.window)
+
 
     def add_object(self, obj_type: str, position):
         assert isinstance(position, tuple) and all(isinstance(x, int) for x in position), "position musi być krotką 2 liczb całkowitych"
@@ -288,16 +289,8 @@ class LevelEditor:
         if world_pos[1] > self.floor.floor_y:
             return
 
-        x = (world_pos[0] // self.grid_size) * self.grid_size
-        y = (world_pos[1] // self.grid_size) * self.grid_size
-
-        if obj_type == 'block':
-            x += self.grid_size // 2
-            y += self.grid_size // 2
-
-        if obj_type == 'spike':
-            x += self.grid_size // 2
-            y += self.grid_size // 2
+        x = ((world_pos[0] // self.grid_size) * self.grid_size) + self.grid_size // 2
+        y = ((world_pos[1] // self.grid_size) * self.grid_size) + self.grid_size // 2
 
         new_obj = {"type": obj_type, "x": x, "y": y}
 
@@ -324,12 +317,8 @@ class LevelEditor:
 
             print(grid_x, grid_y)
 
-            if obj["type"] == "block":
-                obj_grid_x = obj_x // self.grid_size
-                obj_grid_y = obj_y // self.grid_size
-            else:
-                obj_grid_x = obj_x // self.grid_size
-                obj_grid_y = obj_y // self.grid_size
+            obj_grid_x = obj_x // self.grid_size
+            obj_grid_y = obj_y // self.grid_size
 
             print(obj_grid_x, obj_grid_y)
 
@@ -372,9 +361,9 @@ class LevelEditor:
                 case "spike":
                     self.add_object(self.selected_tool, world_pos)
                 case "jump_pad":
-                    pass
+                    self.add_object(self.selected_tool, world_pos)
                 case "jump_orb":
-                    pass
+                    self.add_object(self.selected_tool, world_pos)
 
     def render(self):
         self.draw_grid()
