@@ -28,7 +28,9 @@ class Engine:
         self.attempts = 1  # Liczba prób
         self.objects: List[Union[Block, Spike, JumpPad, JumpOrb]] = []
         self.camera_offset_x = 0
+
         self.end_wall: Optional[EndWall] = None
+        self.on_orb = False
 
     """Aktualizuje pozycję gracza na podstawie prędkości, grawitacji i czasu."""
     def update_player(self, player: Player, delta_time: float, screen: pygame.Surface) -> bool:
@@ -50,6 +52,24 @@ class Engine:
         # Aktualizuj pozycję X gracza
         game_over = self._update_horizontal_movement(player, delta_time)
         if game_over: return True
+
+        for obj in self.objects:
+            if not (isinstance(obj, JumpOrb) or isinstance(obj, JumpPad)):
+                continue
+
+            player_bounds = self._get_block_bounds(player)
+            object_bounds = self._get_block_bounds(obj)
+
+            if isinstance(obj, JumpPad):
+                if self._rectangles_overlap(object_bounds, player_bounds):
+                    self.player_jump(player, 1.3)
+
+            elif isinstance(obj, JumpOrb):
+                if self._rectangles_overlap(object_bounds, player_bounds):
+                    keys = pygame.key.get_pressed()
+                    mouse_buttons = pygame.mouse.get_pressed()
+
+                    if keys[pygame.K_UP] or mouse_buttons[0]: self.player_jump(player, 0.9, True)
 
         self._update_camera(player)
 
@@ -109,18 +129,21 @@ class Engine:
             self.camera_offset_x = int(target_camera_x)
 
     """Wykonuje skok gracza jeśli jest na ziemi."""
-    def player_jump(self, player: Player):
+
+    def player_jump(self, player: Player, multiply: [int, float] = 1, force_jump: bool = False):
         """ Args:
                 player: Gracz wykonujący skok
+                multiply: O ile silniejszy ma być skok
+                force_jump: Czy wymusić skok (jump_orb)
         """
         self._validate_player(player)
 
-        if not player.on_ground:
+        if not (player.on_ground or force_jump):
             return
 
         # Skalowanie siły skoku na podstawie obecnej wysokości ekranu
         screen_height = pygame.display.get_surface().get_height()
-        scaled_jump_force = self.jump_force * (screen_height / self.original_screen_height)
+        scaled_jump_force = (self.jump_force * multiply) * (screen_height / self.original_screen_height)
 
         player.velocity_y = scaled_jump_force
         player.on_ground = False
@@ -151,8 +174,7 @@ class Engine:
                 # Spadanie na blok
                 if player.velocity_y >= 0:
                     if block_bounds['top'] <= player_bottom <= block_bounds['bottom']:
-                        if (highest_block_top is None or
-                                block_bounds['top'] < highest_block_top):
+                        if highest_block_top is None or block_bounds['top'] < highest_block_top:
                             highest_block_top = block_bounds['top']
 
         return highest_block_top
@@ -171,13 +193,82 @@ class Engine:
             if not (isinstance(obj, Block) or isinstance(obj, Spike)):
                 continue
 
-            block_bounds = self._get_block_bounds(obj)
+            if isinstance(obj, Block):
+                block_bounds = self._get_block_bounds(obj)
+                if self._rectangles_overlap(player_bounds, block_bounds):
+                    return True
 
-            # Sprawdź kolizję prostokątów
-            if self._rectangles_overlap(player_bounds, block_bounds):
+            if isinstance(obj, Spike):
+                if self._check_spike_collision(player, obj):
+                    return True
+
+        return False
+
+    """Sprawdza czy gracz ma kolizję z kolcem."""
+    def _check_spike_collision(self, player: Player, spike: Spike):
+        """ Args:
+                player: Gracz
+                spike: Kolec
+            Returns:
+                True, jeśli jakiś wierzchołek gracza jest w trójkącie; False w przeciwnym wypadku
+        """
+        spike.update_size(pygame.display.get_surface())
+        points = spike.outer_points
+
+        vertices = [
+            self.screen_to_world(player.outer_rect.topleft),
+            self.screen_to_world(player.outer_rect.topright),
+            self.screen_to_world(player.outer_rect.bottomleft),
+            self.screen_to_world(player.outer_rect.bottomright)
+        ]
+
+        for vertex in vertices:
+            if self._is_point_inside_triangle(points, vertex):
                 return True
 
         return False
+
+    """Sprawdza czy punkt jest w trójkącie."""
+    @staticmethod
+    def _is_point_inside_triangle(points: list[tuple[int, int]], point: tuple[int, int]) -> bool:
+        """ Args:
+                points: Wierzchołki trójkąta
+                point: Punkt
+            Returns:
+                True, jeśli punkt jest w trójkącie; False w przeciwnym wypadku
+        """
+        Engine._validate_triangle_points(points)
+
+        x, y = point
+        x1, y1 = points[0]
+        x2, y2 = points[1]
+        x3, y3 = points[2]
+
+        A = Engine._get_triangle_area([(x1, y1), (x2, y2), (x3, y3)])
+
+        A1 = Engine._get_triangle_area([(x, y), (x2, y2), (x3, y3)])
+
+        A2 = Engine._get_triangle_area([(x1, y1), (x, y), (x3, y3)])
+
+        A3 = Engine._get_triangle_area([(x1, y1), (x2, y2), (x, y)])
+
+        return A == A1 + A2 + A3
+
+    """Zwraca pole trójkąta."""
+    @staticmethod
+    def _get_triangle_area(points: list[tuple[int, int]]):
+        """ Args:
+                points: Wierzchołki trójkąta
+            Returns:
+                Pole trójkąta
+        """
+        Engine._validate_triangle_points(points)
+
+        x1, y1 = points[0]
+        x2, y2 = points[1]
+        x3, y3 = points[2]
+
+        return abs((x1 * (y2 - y3) + x2 * (y3 - y1) + x3 * (y1 - y2)) / 2.0)
 
     """Zwraca granice gracza dla danej pozycji X."""
     @staticmethod
@@ -311,12 +402,14 @@ class Engine:
         """
         obj_type = obj.__class__.__name__
 
-        if obj_type == 'Block':
-            temp_block = Block(screen_x, obj.y)
-            temp_block.draw(screen)
-        elif obj_type == 'Spike':
-            temp_spike = Spike(screen_x, obj.y)
-            temp_spike.draw(screen)
+        types = {
+            "Block": Block(screen_x, obj.y),
+            "Spike": Spike(screen_x, obj.y),
+            "JumpOrb": JumpOrb(screen_x, obj.y),
+            "JumpPad": JumpPad(screen_x, obj.y)
+        }
+
+        types[obj_type].draw(screen)
 
     """Konwertuje współrzędne świata na współrzędne ekranu."""
     def world_to_screen(self, world_pos: Tuple[int, int]) -> Tuple[int, int]:
@@ -421,18 +514,9 @@ class Engine:
             raise ValueError("obstacle_rect musi być instancją pygame.Rect")
 
     @staticmethod
-    def _validate_rect_polygon_params(outer_rect, polygon_points):
-        if not isinstance(outer_rect, pygame.Rect):
-            raise ValueError("outer_rect musi być obiektem pygame.Rect")
-        if not isinstance(polygon_points, list):
-            raise ValueError("polygon_points musi być listą")
-
-    @staticmethod
-    def _validate_point_polygon_params(point, polygon_points):
-        if not isinstance(point, tuple) or len(point) != 2 or not all(isinstance(x, int) for x in point):
-            raise ValueError("point musi być krotką 2 liczb całkowitych")
-        if not isinstance(polygon_points, list):
-            raise ValueError("polygon_points musi być listą")
+    def _validate_triangle_points(points):
+        if not isinstance(points, list) and not all(isinstance(x, tuple) for x in points) and not length(points) == 3:
+            raise ValueError("points musi być listą krotek")
 
     @staticmethod
     def _validate_player_screen(player, screen):
