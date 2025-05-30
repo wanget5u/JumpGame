@@ -7,7 +7,7 @@ A game that bears resemblence to the popular game <b>"Geometry Dash"</b>. Made e
 ## About 
     
 ### How to Play
-- **Spacebar/Up Arrow**: Jump
+- **Left mouse click/Up Arrow**: Jump
 - **Hold**: Continuous jumping
 - **Escape**: Returns you to the previous window state
 - Navigate through obstacles and reach the end of each level
