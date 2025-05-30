@@ -1,4 +1,4 @@
-import pygame
+import pygame, asyncio
 
 from game.game_manager import GameManager
 
@@ -10,12 +10,16 @@ if __name__ == "__main__":
 
     clock = pygame.time.Clock()
 
-    while game_manager.is_running():
-        delta_time = clock.tick(60) / 1000.0
+    async def game_loop():
+        while game_manager.is_running():
+            delta_time = clock.tick(60) / 1000.0
 
-        game_manager.update(delta_time)
-        game_manager.render()
+            game_manager.update(delta_time)
+            game_manager.render()
 
-        pygame.display.flip()
+            pygame.display.flip()
+            await asyncio.sleep(0)
+
+    asyncio.run(game_loop())
 
     pygame.quit()
