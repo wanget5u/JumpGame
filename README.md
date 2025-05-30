@@ -22,7 +22,7 @@ A game that bears resemblence to the popular game <b>"Geometry Dash"</b>. Made e
     - Smooth Gameplay: Optimized performance for responsive controls
     - Asset Management: Organized sprite and sound assets
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 JumpGame/
@@ -38,7 +38,7 @@ JumpGame/
 └── Dockerfile      # Docker configuration
 ```
 
-## 🛠️ Installation
+## Installation
 
 ### Prerequisites
 
