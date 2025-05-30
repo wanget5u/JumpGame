@@ -72,6 +72,14 @@ Alternatively, you can run the game using Docker:
   docker run -it jump-game
 ```
 
+### WebApp Setup
+
+You can also run the game with <b>pygbag</b> by running. Game should be available on http://localhost:8000/
+```bash
+  cd .
+  pygbag JumpGame
+```
+
 # In-game screenshots
 
 ### Title menu:
