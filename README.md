@@ -21,6 +21,7 @@ A game that bears resemblence to the popular game <b>"Geometry Dash"</b>. Made e
     - Collision Detection: Precise collision system for blocks and spikes
     - Smooth Gameplay: Optimized performance for responsive controls
     - Asset Management: Organized sprite and sound assets
+    - Level Editor: For level edition (loading and saving available)
 
 ## Project Structure
 
