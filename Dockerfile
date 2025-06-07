@@ -1,15 +1,23 @@
-FROM python:3.11
+FROM python:3.11-slim
 
 WORKDIR /app
 
-# Zainstaluj zależności systemowe, w tym fontconfig
-RUN apt-get update && apt-get install -y \
+COPY . /app
+
+COPY requirements.txt .
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3-pygame \
+    libgl1-mesa-glx \
+    libxext6 \
+    libxrender1 \
+    libfontconfig1 \
     fontconfig \
-    && rm -rf /var/lib/apt/lists/*
+    libsdl2-image-dev \
+    libsdl2-mixer-dev \
+    libsdl2-ttf-dev && \
+    rm -rf /var/lib/apt/lists/*
 
-COPY requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install -r requirements.txt
 
-COPY . .
-
-CMD ["python", "main.py"]
+CMD ["python3", "main.py"]
