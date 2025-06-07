@@ -126,8 +126,6 @@ class LevelEditor:
         with open(levels_path, "w") as file:
             json.dump(self.levels, file, indent=2)
 
-        print(f"Zapisano {len(self.levels)} poziom do {levels_path}.")
-
     def load_level(self, index: int):
         assert isinstance(index, int) and index > 0, "index musi być dodatnią liczbą całkowitą"
 
@@ -137,8 +135,6 @@ class LevelEditor:
                 self.current_level_index = index
                 self.name_input = level["name"]
                 self.difficulty_input = level["difficulty"]
-
-        print(f"Wczytano poziom {self.name_input}.")
 
     def create_empty_level(self) -> list:
         self.current_level_index = len(self.levels)
@@ -294,8 +290,6 @@ class LevelEditor:
 
         new_obj = {"type": obj_type, "x": x, "y": y}
 
-        print(x, y)
-
         self.current_level["layout"].append(new_obj)
         self.selected_object = new_obj
         self.selected_object_index = len(self.current_level["layout"]) - 1
@@ -315,12 +309,8 @@ class LevelEditor:
             obj_x = obj["x"]
             obj_y = obj["y"]
 
-            print(grid_x, grid_y)
-
             obj_grid_x = obj_x // self.grid_size
             obj_grid_y = obj_y // self.grid_size
-
-            print(obj_grid_x, obj_grid_y)
 
             if obj_grid_x == grid_x and obj_grid_y == grid_y:
                 del self.current_level["layout"][index]
