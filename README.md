@@ -69,32 +69,18 @@ JumpGame/
 Alternatively, you can run the game using Docker:
 
 1. **Build the Docker Image**
-   <h6>Navigate to the root directory of your JumpGame project in your terminal (where the Dockerfile is located) and run:</h6>
    ```bash
    docker build -t jump-game .
    ```
 
 2. **Navigate to the Project Directory in your Linux Terminal**
-   <h6>It's crucial to run the game from within a WSL Linux terminal (e.g., Ubuntu, Debian) to correctly leverage WSLg. <br>
-First, open your WSL terminal. Then, navigate to your project directory:</h6>
    ```bash
    cd /mnt/c/Users/{your_host_name}/Pycharm
    ```
 
 3. **Run the Game via Docker**
-   <h6>Ensure Docker Desktop is running on Windows. Then, from your WSL Linux terminal, execute the following command.<br> This command passes the necessary environment variables and mounts the X11 socket for graphical output via WSLg.</h6>
    ```bash
    sh run_docker_params.sh
-   ```
-   or
-   ```bash
-   docker run \
-   -e DISPLAY=$DISPLAY \
-   -e WAYLAND_DISPLAY=$WAYLAND_DISPLAY \
-   -e XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR \
-   -v /tmp/.X11-unix:/tmp/.X11-unix \
-   -v $XDG_RUNTIME_DIR:$XDG_RUNTIME_DIR \
-   -it jumpgame
    ```
 
 ### WebApp Setup
